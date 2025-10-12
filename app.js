@@ -27,6 +27,18 @@
         label: 'How old are you?',
         help: 'Slide or tap to set your age. You can also type a number.',
         input: { min: 18, max: 100, step: 1, showValue: true },
+        next: 'ethnicity'
+      },
+
+
+      $1 (a) => (a === 'other' ? 'ethnicity_other' : 'gender')
+      },
+
+
+      ethnicity_other: {
+        id: 'ethnicity_other', type: 'text', required: true,
+        label: 'Please specify your ancestry',
+        input: { placeholder: 'e.g., Middle Eastern, Pacific Islander…' },
         next: 'gender'
       },
 
