@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pre‑Consultation (Ophthalmology)</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="site-header" role="banner">
+<h1 class="title">Pre‑Consultation Questionnaire</h1>
+<p class="subtitle">Designed for cataract & glaucoma clinics</p>
+</header>
+
+
+<main id="main" role="main">
+<div aria-live="polite" class="progress" id="progress" aria-label="Progress">
+<div class="progress-bar" id="progressBar" style="width:0%"></div>
+</div>
+
+
+<form id="form" novalidate aria-describedby="help">
+<div id="questionContainer"></div>
+
+
+<div class="nav">
+<button type="button" class="btn secondary" id="backBtn" aria-label="Go to previous question">Back</button>
+<button type="button" class="btn primary" id="nextBtn" aria-label="Go to next question">Next</button>
+</div>
+</form>
+
+
+<div id="review" class="hidden" role="region" aria-labelledby="reviewTitle">
+<h2 id="reviewTitle">Review & Submit</h2>
+<p>Check your answers. You can go Back to edit, or Submit to finish.</p>
+<div id="reviewContent" class="review"></div>
+<div class="nav">
+<button type="button" class="btn secondary" id="reviewBackBtn">Back</button>
+<button type="button" class="btn success" id="submitBtn">Submit</button>
+</div>
+</div>
+
+
+<div id="submitted" class="hidden" role="region" aria-labelledby="submittedTitle">
+<h2 id="submittedTitle">All done!</h2>
+<p>Your responses have been prepared below. Click to copy or download the file and email it to the clinic.</p>
+<textarea id="output" rows="12" readonly aria-label="Your answers (JSON)"></textarea>
+<div class="nav">
+<button type="button" class="btn" id="copyBtn">Copy to clipboard</button>
+<button type="button" class="btn" id="downloadBtn">Download JSON</button>
+<button type="button" class="btn secondary" id="restartBtn">Start over</button>
+</div>
+</div>
+</main>
+
+
+<footer class="site-footer" role="contentinfo">
+<small>Accessibility‑first • No account required • Your data stays in your browser until you choose to submit.</small>
+</footer>
+
+
+<script src="app.js"></script>
+</body>
+</html>
