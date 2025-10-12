@@ -30,9 +30,22 @@
         next: 'ethnicity'
       },
 
-
-      $1 (a) => (a === 'other' ? 'ethnicity_other' : 'gender')
+      ethnicity: {
+        id: 'ethnicity', type: 'single', required: true,
+        label: 'Ancestry (for risk assessment)',
+        input: { style: 'big' },
+        options: [
+          { value: 'caucasian', label: 'Caucasian' },
+          { value: 'african', label: 'African' },
+          { value: 'asian', label: 'Asian' },
+          { value: 'indigenous_aus', label: 'Indigenous Australian' },
+          { value: 'other', label: 'Other' },
+          { value: 'prefer_not_say', label: 'Prefer not to say' }
+        ],
+        next: (a) => (a === 'other' ? 'ethnicity_other' : 'gender')
       },
+
+      
 
 
       ethnicity_other: {
