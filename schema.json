@@ -1,0 +1,252 @@
+{
+  "title": "Pre‑Consultation (Ophthalmology)",
+  "start": "consent",
+  "questions": {
+    "consent": {
+      "id": "consent",
+      "type": "single",
+      "label": "Do you consent to completing a short pre‑consultation questionnaire? Your answers will be reviewed by the clinic team.",
+      "help": "You can stop anytime. Your answers are kept on this device until you choose to submit.",
+      "required": true,
+      "input": { "style": "big" },
+      "options": [
+        { "value": "yes", "label": "Yes, I agree" },
+        { "value": "no", "label": "No, not today" }
+      ],
+      "next": { "when": { "yes": "age" }, "default": "review" }
+    },
+
+    "age": {
+      "id": "age",
+      "type": "slider",
+      "required": true,
+      "label": "How old are you?",
+      "help": "Slide or tap to set your age. You can also type a number.",
+      "input": { "min": 18, "max": 100, "step": 1, "showValue": true },
+      "next": "ethnicity"
+    },
+
+    "ethnicity": {
+      "id": "ethnicity",
+      "type": "single",
+      "required": true,
+      "label": "Ancestry (for risk assessment)",
+      "input": { "style": "big" },
+      "options": [
+        { "value": "caucasian", "label": "Caucasian" },
+        { "value": "african", "label": "African" },
+        { "value": "asian", "label": "Asian" },
+        { "value": "indigenous_aus", "label": "Indigenous Australian" },
+        { "value": "other", "label": "Other" },
+        { "value": "prefer_not_say", "label": "Prefer not to say" }
+      ],
+      "next": { "when": { "other": "ethnicity_other" }, "default": "gender" }
+    },
+
+    "ethnicity_other": {
+      "id": "ethnicity_other",
+      "type": "text",
+      "required": true,
+      "label": "Please specify your ancestry",
+      "input": { "placeholder": "e.g., Middle Eastern, Pacific Islander…" },
+      "next": "gender"
+    },
+
+    "gender": {
+      "id": "gender",
+      "type": "single",
+      "required": true,
+      "label": "What is your gender?",
+      "input": { "style": "big" },
+      "options": [
+        { "value": "female", "label": "Female" },
+        { "value": "male", "label": "Male" },
+        { "value": "other", "label": "Other / prefer not to say" }
+      ],
+      "next": "pmhx"
+    },
+
+    "pmhx": {
+      "id": "pmhx",
+      "type": "multi",
+      "required": false,
+      "label": "Do you have any of the following? (tick any)",
+      "help": "These can affect cataracts, glaucoma risk, or surgery planning.",
+      "options": [
+        { "value": "diabetes", "label": "Diabetes" },
+        { "value": "hypertension", "label": "High blood pressure" },
+        { "value": "heart", "label": "Heart disease" },
+        { "value": "thyroid", "label": "Thyroid problems" },
+        { "value": "sleep_apnoea", "label": "Sleep apnoea" },
+        { "value": "steroids", "label": "Regular steroid use" },
+        { "value": "anticoagulants", "label": "Blood thinners" },
+        { "value": "none", "label": "None of these" }
+      ],
+      "next": "ocular_history"
+    },
+
+    "ocular_history": {
+      "id": "ocular_history",
+      "type": "multi",
+      "label": "Any eye conditions or previous eye surgery?",
+      "options": [
+        { "value": "cataract", "label": "Cataract" },
+        { "value": "glaucoma", "label": "Glaucoma" },
+        { "value": "amd", "label": "Macular degeneration" },
+        { "value": "diabetic_eye", "label": "Diabetic eye disease" },
+        { "value": "prev_surgery", "label": "Previous eye surgery" },
+        { "value": "none", "label": "None" }
+      ],
+      "next": "referral_reason"
+    },
+
+    "referral_reason": {
+      "id": "referral_reason",
+      "type": "single",
+      "required": true,
+      "label": "Why were you referred?",
+      "input": { "style": "big" },
+      "options": [
+        { "value": "cataract", "label": "Referred for cataracts" },
+        { "value": "glaucoma", "label": "Referred for glaucoma" },
+        { "value": "both", "label": "Both cataract and glaucoma" },
+        { "value": "vision_decrease", "label": "My vision has decreased recently" },
+        { "value": "checkup", "label": "General check‑up" },
+        { "value": "other", "label": "Other (will type)" }
+      ],
+      "next": {
+        "when": {
+          "cataract": "cataract_symptoms",
+          "glaucoma": "glaucoma_history",
+          "both": "cataract_symptoms",
+          "other": "other_reason",
+          "vision_decrease": "vision_details"
+        },
+        "default": "review"
+      }
+    },
+
+    "other_reason": {
+      "id": "other_reason",
+      "type": "text",
+      "required": true,
+      "label": "Please tell us the reason for your visit",
+      "input": { "placeholder": "Type or use the mic" },
+      "next": "review"
+    },
+
+    "vision_details": {
+      "id": "vision_details",
+      "type": "text",
+      "required": false,
+      "label": "Tell us about your vision changes",
+      "input": { "placeholder": "e.g., blurred distance, glare at night, double vision…" },
+      "next": "review"
+    },
+
+    "cataract_symptoms": {
+      "id": "cataract_symptoms",
+      "type": "multi",
+      "required": false,
+      "label": "Which symptoms bother you most? (pick any)",
+      "options": [
+        { "value": "glare", "label": "Glare / halos at night" },
+        { "value": "reading", "label": "Reading difficulties" },
+        { "value": "distance", "label": "Distance blur (e.g., number plates)" },
+        { "value": "contrast", "label": "Washed‑out colours / low contrast" },
+        { "value": "double", "label": "Double vision in one eye" }
+      ],
+      "next": "lifestyle_priorities"
+    },
+
+    "lifestyle_priorities": {
+      "id": "lifestyle_priorities",
+      "type": "single",
+      "required": true,
+      "label": "If you had cataract surgery, what’s your priority?",
+      "input": { "style": "big" },
+      "options": [
+        { "value": "distance", "label": "Clear distance vision without glasses" },
+        { "value": "near", "label": "Near/reading without glasses" },
+        { "value": "balanced", "label": "Balanced distance & near" },
+        { "value": "unsure", "label": "Unsure — would like info" }
+      ],
+      "next": "astigmatism_known"
+    },
+
+    "astigmatism_known": {
+      "id": "astigmatism_known",
+      "type": "single",
+      "required": true,
+      "label": "Has anyone told you that you have astigmatism?",
+      "input": { "style": "big" },
+      "options": [
+        { "value": "yes", "label": "Yes" },
+        { "value": "no", "label": "No" },
+        { "value": "unsure", "label": "Not sure" }
+      ],
+      "next": "lens_info"
+    },
+
+    "lens_info": {
+      "id": "lens_info",
+      "type": "single",
+      "required": true,
+      "label": "Would you like a brief intro to lens options now?",
+      "input": { "style": "big" },
+      "options": [
+        { "value": "yes", "label": "Yes, show me briefly" },
+        { "value": "no", "label": "No thanks" }
+      ],
+      "next": { "when": { "yes": "lens_education" }, "default": "ocular_dominance" }
+    },
+
+    "lens_education": {
+      "id": "lens_education",
+      "type": "text",
+      "required": false,
+      "label": "Lens options (very brief):",
+      "input": { "textarea": true, "readonly": true },
+      "preset": "Monofocal: sharp at one distance; Toric: corrects astigmatism;
+EDOF: extended range, fewer halos but may still need glasses;
+Multifocal: distance+near, more halos/glare for some.
+Final recommendation will be personalised by your surgeon.",
+      "next": "ocular_dominance"
+    },
+
+    "ocular_dominance": {
+      "id": "ocular_dominance",
+      "type": "ocular_dominance",
+      "required": false,
+      "label": "Ocular dominance (optional quick check)",
+      "help": "Form a small circle with your fingers, arm’s length. With both eyes open, centre a distant object in the circle. Gently close one eye. The eye that keeps the object centred tends to be dominant. You can also try the webcam helper.",
+      "next": "review"
+    },
+
+    "glaucoma_history": {
+      "id": "glaucoma_history",
+      "type": "multi",
+      "required": false,
+      "label": "Glaucoma history (tick any)",
+      "options": [
+        { "value": "fhx", "label": "Family history of glaucoma" },
+        { "value": "prev_laser", "label": "Previous laser (e.g., SLT, LPI)" },
+        { "value": "prev_surgery", "label": "Previous glaucoma surgery" },
+        { "value": "drops", "label": "Currently on drops" },
+        { "value": "none", "label": "None of these" }
+      ],
+      "next": "glaucoma_drops"
+    },
+
+    "glaucoma_drops": {
+      "id": "glaucoma_drops",
+      "type": "text",
+      "required": false,
+      "label": "If on drops, which ones? (e.g., latanoprost at night)",
+      "input": { "placeholder": "Type or use the mic" },
+      "next": "review"
+    },
+
+    "review": { "id": "review", "type": "review" }
+  }
+}
