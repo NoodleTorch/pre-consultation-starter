@@ -1,305 +1,512 @@
+// app.js — schema-driven questionnaire engine (no framework)
+// Loads schema.json, renders one question per page, supports branching via
+//  - next: "id"
+//  - next: { when: { answerValue: "id", ... }, default: "id" }
+//  - next: { byAnswerOf: "<prevQuestionId>", map: { value: "id", ... }, default: "id" }
+// Stores answers in localStorage until submit.
+
 (function () {
-  // ------- Load external schema.json (no code edits for questions) -------------
-  let SCHEMA = null; // will be loaded from schema.json
+  const SCHEMA_URL = 'schema.json';
+  const STORE_KEY = 'preconsult_answers_v1';
 
   // DOM refs
-  const $ = (sel) => document.querySelector(sel);
-  const formEl = $('#form');
-  const container = $('#questionContainer');
-  const progressBar = $('#progressBar');
-  const backBtn = $('#backBtn');
-  const nextBtn = $('#nextBtn');
-  const reviewPanel = $('#review');
-  const reviewContent = $('#reviewContent');
-  const reviewBackBtn = $('#reviewBackBtn');
-  const submitBtn = $('#submitBtn');
-  const submitted = $('#submitted');
-  const output = $('#output');
-  const copyBtn = $('#copyBtn');
-  const downloadBtn = $('#downloadBtn');
-  const restartBtn = $('#restartBtn');
+  const el = {
+    form: document.getElementById('form'),
+    qwrap: document.getElementById('questionContainer'),
+    next: document.getElementById('nextBtn'),
+    back: document.getElementById('backBtn'),
+    progressBar: document.getElementById('progressBar'),
 
-  const app = { order: [], idx: 0, answers: {}, started: false };
+    review: document.getElementById('review'),
+    reviewBack: document.getElementById('reviewBackBtn'),
+    reviewContent: document.getElementById('reviewContent'),
 
-  function setLoading(msg) {
-    formEl.classList.remove('hidden');
-    reviewPanel.classList.add('hidden');
-    submitted.classList.add('hidden');
-    backBtn.disabled = true; nextBtn.disabled = true; nextBtn.textContent = 'Next';
-    container.innerHTML = '';
-    const p = document.createElement('p'); p.className = 'helper'; p.textContent = msg || 'Loading…';
-    container.appendChild(p);
-  }
+    submitted: document.getElementById('submitted'),
+    output: document.getElementById('output'),
+    copy: document.getElementById('copyBtn'),
+    download: document.getElementById('downloadBtn'),
+    restart: document.getElementById('restartBtn'),
+  };
 
-  async function loadSchema() {
+  const app = {
+    schema: null,
+    currentId: null,
+    // Visited path to support Back (stack of question ids)
+    stack: [],
+    // Answers object: { [id]: value }
+    answers: loadAnswers(),
+  };
+
+  // Bootstrap
+  fetch(SCHEMA_URL, { cache: 'no-store' })
+    .then(r => r.json())
+    .then(schema => {
+      app.schema = schema;
+      const start = schema.start || Object.keys(schema.questions)[0];
+      goTo(start, false);
+      wireNav();
+    })
+    .catch(err => {
+      renderError('Failed to load questionnaire. Please refresh.');
+      console.error(err);
+    });
+
+  function loadAnswers() {
     try {
-      setLoading('Loading questionnaire…');
-      const res = await fetch('schema.json', { cache: 'no-store' });
-      if (!res.ok) throw new Error('Failed to load schema.json');
-      SCHEMA = await res.json();
-      // Restore saved answers if any
-      try {
-        const saved = JSON.parse(localStorage.getItem('precon_answers') || 'null');
-        if (saved && typeof saved === 'object') app.answers = saved;
-      } catch {}
-      buildPath();
-      if (!app.order.length) app.order = [SCHEMA.start];
-      render();
-    } catch (e) {
-      setLoading('Could not load the questionnaire. Please check that schema.json is present.');
-      console.error(e);
+      const raw = localStorage.getItem(STORE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+  function saveAnswers() {
+    localStorage.setItem(STORE_KEY, JSON.stringify(app.answers));
+  }
+
+  function wireNav() {
+    el.next.addEventListener('click', onNext);
+    el.back.addEventListener('click', onBack);
+    el.reviewBack.addEventListener('click', onReviewBack);
+    el.copy.addEventListener('click', onCopy);
+    el.download.addEventListener('click', onDownload);
+    el.restart.addEventListener('click', onRestart);
+  }
+
+  function onNext() {
+    const q = getQ(app.currentId);
+    if (!q) return;
+
+    const ans = readAnswer(q);
+    if (!validate(q, ans)) return; // show inline error if needed
+
+    app.answers[q.id] = ans;
+    saveAnswers();
+
+    const nextId = getNextId(q.id, ans);
+    if (!nextId) {
+      // fallback to review if no next
+      return showReview();
+    }
+    // push current id to stack before moving forward
+    app.stack.push(q.id);
+    goTo(nextId, true);
+  }
+
+  function onBack() {
+    if (!app.stack.length) return;
+    const prevId = app.stack.pop();
+    goTo(prevId, false);
+  }
+
+  function onReviewBack() {
+    // Return to last question visited
+    if (app.stack.length) {
+      const last = app.stack.pop();
+      showForm();
+      goTo(last, false);
+    } else {
+      // If somehow empty, go to start
+      showForm();
+      goTo(app.schema.start, false);
     }
   }
 
-  // ------- Navigation helpers --------------------------------------------------
-  function getNextId(currId, answer) {
-    const q = SCHEMA?.questions?.[currId];
-    if (!q || q.next == null) return null;
-    if (typeof q.next === 'string') return q.next;
-    if (typeof q.next === 'object' && q.next.when) {
-      // If answer is array (multi), route on first match
-      if (Array.isArray(answer)) {
-        for (const v of answer) {
-          if (q.next.when[v] != null) return q.next.when[v];
-        }
-      } else if (answer != null && q.next.when[answer] != null) {
-        return q.next.when[answer];
-      }
-      return q.next.default ?? null;
-    }
-    return null;
+  function onCopy() {
+    el.output.select();
+    document.execCommand('copy');
   }
 
-  function buildPath() {
-    if (!SCHEMA) return;
-    const path = [];
-    let seen = new Set();
-    let id = SCHEMA.start;
-    while (id && !seen.has(id)) {
-      seen.add(id); path.push(id);
-      const ans = app.answers[id];
-      id = getNextId(id, ans);
-      if (!id) break;
-      if (id === 'review') { path.push('review'); break; }
+  function onDownload() {
+    const blob = new Blob([el.output.value], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'preconsult-answers.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function onRestart() {
+    localStorage.removeItem(STORE_KEY);
+    app.answers = {};
+    app.stack = [];
+    showForm();
+    goTo(app.schema.start, false);
+  }
+
+  function getQ(id) {
+    return app.schema && app.schema.questions && app.schema.questions[id];
+  }
+
+  function goTo(id, forward) {
+    const q = getQ(id);
+    app.currentId = id;
+
+    // Toggle review/submitted sections
+    if (!q || q.type === 'review') {
+      return showReview();
     }
-    app.order = path;
+
+    showForm();
+    renderQuestion(q);
     updateProgress();
+
+    // Focus first interactive element for accessibility
+    const focusable = el.qwrap.querySelector('button, input, textarea, select');
+    if (focusable) focusable.focus();
+
+    // Back button state
+    el.back.disabled = app.stack.length === 0;
   }
 
   function updateProgress() {
-    const total = app.order.length || 1;
-    const pct = Math.round((Math.min(app.idx + 1, total) / total) * 100);
-    progressBar.style.width = pct + '%';
+    // Simple heuristic: answered unique count over answered + remaining-estimate
+    const answered = Object.keys(app.answers).length;
+    const total = Object.keys(app.schema.questions).length;
+    const pct = Math.min(100, Math.round((answered / Math.max(1, total - 2)) * 100));
+    el.progressBar.style.width = pct + '%';
   }
 
-  function render() {
-    if (!SCHEMA) { setLoading('Loading questionnaire…'); return; }
-    buildPath();
+  function renderError(msg) {
+    el.qwrap.innerHTML = `<div class="notice error">${escapeHtml(msg)}</div>`;
+  }
 
-    const id = app.order[app.idx];
-    const q = SCHEMA.questions[id];
+  function renderQuestion(q) {
+    // Clear container
+    el.qwrap.innerHTML = '';
 
-    // Panels visibility
-    formEl.classList.toggle('hidden', id === 'review');
-    reviewPanel.classList.toggle('hidden', id !== 'review');
-    submitted.classList.add('hidden');
+    const wrapper = document.createElement('div');
+    wrapper.className = 'question';
 
-    backBtn.disabled = app.idx === 0;
-
-    if (id === 'review') { renderReview(); return; }
-
-    // Draw question
-    container.innerHTML = '';
-    const h2 = document.createElement('h2');
-    h2.className = 'question'; h2.textContent = q.label; container.appendChild(h2);
+    const h = document.createElement('h2');
+    h.textContent = q.label || 'Question';
+    wrapper.appendChild(h);
 
     if (q.help) {
-      const p = document.createElement('p'); p.className = 'helper'; p.id = 'help'; p.textContent = q.help; container.appendChild(p);
+      const p = document.createElement('p');
+      p.className = 'help';
+      p.textContent = q.help;
+      wrapper.appendChild(p);
     }
 
+    // Render by type
     let control = null;
-    if (q.type === 'text') control = renderText(q);
-    else if (q.type === 'slider') control = renderSlider(q);
-    else if (q.type === 'single') control = renderSingle(q);
-    else if (q.type === 'multi') control = renderMulti(q);
-    else if (q.type === 'ocular_dominance') control = renderOcularDominance(q);
+    switch (q.type) {
+      case 'single': control = renderSingle(q); break;
+      case 'multi': control = renderMulti(q); break;
+      case 'slider': control = renderSlider(q); break;
+      case 'text': control = renderText(q); break;
+      case 'ocular_dominance': control = renderOcularDominance(q); break;
+      default: control = renderText(q); break;
+    }
 
-    if (control) container.appendChild(control);
+    wrapper.appendChild(control);
 
-    nextBtn.textContent = 'Next';
-    const last = app.order[app.order.length - 1];
-    if (last === id) nextBtn.textContent = 'Review';
+    // Show any error area
+    const err = document.createElement('div');
+    err.className = 'error-msg';
+    err.id = 'error_' + q.id;
+    err.setAttribute('aria-live', 'polite');
+    wrapper.appendChild(err);
 
-    validateAndToggleNext();
+    el.qwrap.appendChild(wrapper);
 
-    const first = container.querySelector('input, textarea, button.option-btn');
-    if (first) first.focus();
+    // Restore previous answer if any
+    restoreAnswer(q);
   }
 
-  // ------- Renderers -----------------------------------------------------------
-  function renderText(q) {
-    const wrap = document.createElement('div');
-    let el;
-    if (q.input && q.input.textarea) {
-      el = document.createElement('textarea'); el.rows = 4; if (q.input.readonly) el.readOnly = true; if (q.preset) el.value = q.preset;
-    } else {
-      el = document.createElement('input'); el.type = 'text'; el.inputMode = 'text';
-    }
-    if (q.input && q.input.placeholder) el.placeholder = q.input.placeholder;
-    el.value = (app.answers[q.id] ?? '');
-    el.addEventListener('input', () => { app.answers[q.id] = el.value.trim(); validateAndToggleNext(); });
+  function renderSingle(q) {
+    const box = document.createElement('div');
+    box.className = 'options single';
+    const current = app.answers[q.id];
 
-    if (!(q.input && q.input.readonly)) {
-      const mic = document.createElement('button'); mic.type = 'button'; mic.className = 'mic'; mic.setAttribute('aria-pressed','false'); mic.textContent = '🎤 Speak';
-      let rec = null;
-      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition; rec = new SR(); rec.lang = 'en-AU'; rec.interimResults = false;
-        rec.onresult = (e) => { const txt = Array.from(e.results).map(r=>r[0].transcript).join(' '); el.value = (el.value + ' ' + txt).trim(); app.answers[q.id] = el.value; validateAndToggleNext(); };
-        rec.onend = () => { mic.setAttribute('aria-pressed','false'); };
-        mic.addEventListener('click', () => { if (mic.getAttribute('aria-pressed') === 'true') { rec.stop(); return; } mic.setAttribute('aria-pressed','true'); rec.start(); });
-      } else { mic.disabled = true; mic.title = 'Voice input not supported in this browser.'; }
-      const row = document.createElement('div'); row.appendChild(el); row.appendChild(mic); return row;
-    }
-    return el;
+    (q.options || []).forEach(opt => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'option';
+      btn.textContent = opt.label;
+      btn.setAttribute('data-value', opt.value);
+      if (current === opt.value) btn.classList.add('selected');
+      btn.addEventListener('click', () => {
+        // deselect others
+        box.querySelectorAll('.option').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+      });
+      box.appendChild(btn);
+    });
+
+    return box;
+  }
+
+  function renderMulti(q) {
+    const box = document.createElement('div');
+    box.className = 'options multi';
+    const current = Array.isArray(app.answers[q.id]) ? app.answers[q.id] : [];
+
+    (q.options || []).forEach(opt => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'option';
+      btn.textContent = opt.label;
+      btn.setAttribute('data-value', opt.value);
+      if (current.includes(opt.value)) btn.classList.add('selected');
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('selected');
+      });
+      box.appendChild(btn);
+    });
+
+    return box;
   }
 
   function renderSlider(q) {
     const wrap = document.createElement('div');
-    const input = document.createElement('input'); input.type = 'range'; input.min = q.input?.min ?? 0; input.max = q.input?.max ?? 100; input.step = q.input?.step ?? 1;
-    const current = app.answers[q.id] ?? Math.round((Number(input.min)+Number(input.max))/2); input.value = current;
+    wrap.className = 'slider-wrap';
 
-    const value = document.createElement('div'); value.className = 'range-value'; value.textContent = String(current);
+    const cfg = Object.assign({ min: 0, max: 100, step: 1 }, q.input || {});
 
-    const number = document.createElement('input'); number.type = 'number'; number.min = input.min; number.max = input.max; number.step = input.step; number.value = current; number.style.marginTop = '.5rem';
+    const range = document.createElement('input');
+    range.type = 'range';
+    range.min = cfg.min; range.max = cfg.max; range.step = cfg.step;
+    range.setAttribute('aria-label', 'value');
 
-    function sync(val){
-      const n = String(val).trim(); const v = n === '' ? '' : Number(n);
-      if (n === '' || isNaN(v)) { value.textContent = ''; app.answers[q.id] = ''; }
-      else { const clamped = Math.max(Number(input.min), Math.min(Number(input.max), v)); input.value = clamped; number.value = clamped; value.textContent = String(clamped); app.answers[q.id] = clamped; }
-      validateAndToggleNext();
-    }
-    input.addEventListener('input', (e)=> sync(e.target.value));
-    number.addEventListener('input', (e)=> sync(e.target.value));
+    const number = document.createElement('input');
+    number.type = 'number';
+    number.min = cfg.min; number.max = cfg.max; number.step = cfg.step;
+    number.className = 'number-input';
 
-    wrap.appendChild(input); if (q.input?.showValue) wrap.appendChild(value); wrap.appendChild(number); return wrap;
-  }
+    const initial = app.answers[q.id] ?? cfg.min;
+    range.value = initial; number.value = initial;
 
-  function renderSingle(q) {
-    const wrap = document.createElement('div'); wrap.className = 'options';
-    const current = app.answers[q.id] ?? null;
-    (q.options || []).forEach(opt => {
-      const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'option-btn'; btn.setAttribute('role', 'radio'); btn.setAttribute('aria-pressed', String(current === opt.value)); btn.textContent = opt.label;
-      btn.addEventListener('click', () => {
-        app.answers[q.id] = opt.value; wrap.querySelectorAll('.option-btn').forEach(b => b.setAttribute('aria-pressed','false')); btn.setAttribute('aria-pressed','true'); validateAndToggleNext(); if (matchMedia('(pointer: coarse)').matches) goNext();
-      });
-      wrap.appendChild(btn);
+    range.addEventListener('input', () => { number.value = range.value; });
+    number.addEventListener('input', () => {
+      const v = clamp(parseInt(number.value, 10), cfg.min, cfg.max);
+      number.value = v; range.value = v;
     });
+
+    wrap.appendChild(range);
+    if (cfg.showValue) wrap.appendChild(number);
     return wrap;
   }
 
-  function renderMulti(q) {
-    const wrap = document.createElement('div'); wrap.className = 'options';
-    const current = new Set(app.answers[q.id] || []);
-    (q.options || []).forEach(opt => {
-      const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'option-btn'; btn.setAttribute('aria-pressed', String(current.has(opt.value))); btn.textContent = opt.label;
-      btn.addEventListener('click', () => { if (current.has(opt.value)) current.delete(opt.value); else current.add(opt.value); app.answers[q.id] = Array.from(current); btn.setAttribute('aria-pressed', String(current.has(opt.value))); validateAndToggleNext(); });
-      wrap.appendChild(btn);
-    });
+  function renderText(q) {
+    const wrap = document.createElement('div');
+    const isReadonly = q.input && q.input.readonly;
+    const isArea = q.input && q.input.textarea;
+
+    if (q.preset) {
+      const notice = document.createElement('div');
+      notice.className = 'notice';
+      notice.textContent = q.preset;
+      wrap.appendChild(notice);
+    }
+
+    const ctrl = document.createElement(isArea ? 'textarea' : 'input');
+    if (!isArea) ctrl.type = 'text';
+    ctrl.id = 'input_' + q.id;
+    ctrl.placeholder = q.input && q.input.placeholder ? q.input.placeholder : '';
+    if (isReadonly) {
+      ctrl.setAttribute('readonly', 'readonly');
+    }
+    wrap.appendChild(ctrl);
     return wrap;
   }
 
   function renderOcularDominance(q) {
     const wrap = document.createElement('div');
-    const p = document.createElement('p'); p.className = 'helper'; p.textContent = q.help || ''; wrap.appendChild(p);
+    const p = document.createElement('p');
+    p.className = 'help';
+    p.textContent = q.help || 'Quick check using the finger‑circle method. If unsure, pick Not sure.';
+    wrap.appendChild(p);
 
-    const row = document.createElement('div'); row.className = 'options';
-    ['Left eye seems dominant','Right eye seems dominant','Unsure'].forEach((label,i)=>{
-      const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'option-btn'; btn.textContent = label;
-      btn.addEventListener('click', () => { app.answers[q.id] = ['left','right','unsure'][i]; validateAndToggleNext(); if (matchMedia('(pointer: coarse)').matches) goNext(); });
-      row.appendChild(btn);
+    const opts = [
+      { value: 'left', label: 'Left' },
+      { value: 'right', label: 'Right' },
+      { value: 'unsure', label: 'Not sure' }
+    ];
+    const box = document.createElement('div');
+    box.className = 'options single';
+    opts.forEach(opt => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'option'; b.textContent = opt.label; b.dataset.value = opt.value;
+      b.addEventListener('click', () => {
+        box.querySelectorAll('.option').forEach(x => x.classList.remove('selected'));
+        b.classList.add('selected');
+      });
+      box.appendChild(b);
     });
+    wrap.appendChild(box);
 
-    const camWrap = document.createElement('div'); camWrap.style.marginTop = '1rem';
-    const camBtn = document.createElement('button'); camBtn.type = 'button'; camBtn.className = 'btn secondary'; camBtn.textContent = 'Try webcam helper (beta)'; camBtn.addEventListener('click', startCamHelper); camWrap.appendChild(camBtn);
-
-    wrap.appendChild(row); wrap.appendChild(camWrap); return wrap;
+    // Placeholder for future webcam helper button
+    const small = document.createElement('small');
+    small.textContent = 'Webcam helper coming soon';
+    wrap.appendChild(small);
+    return wrap;
   }
 
-  function startCamHelper(){
-    const overlay = document.createElement('div'); Object.assign(overlay.style,{ position:'fixed', inset:0, background:'rgba(0,0,0,.85)', display:'grid', placeItems:'center', zIndex:9999, padding:'1rem'});
-    const panel = document.createElement('div'); panel.style.background = '#0f141a'; panel.style.border = '1px solid #223140'; panel.style.borderRadius = '16px'; panel.style.padding = '1rem'; panel.style.width = 'min(800px, 95vw)';
-    const title = document.createElement('h3'); title.textContent = 'Webcam helper (beta)'; panel.appendChild(title);
-    const tips = document.createElement('p'); tips.textContent = 'Centre a distant object through the finger circle. Keep both eyes open. This beta shows your face to help alignment; it does not store video.'; panel.appendChild(tips);
-    const video = document.createElement('video'); video.autoplay = true; video.playsInline = true; video.style.width = '100%'; video.style.borderRadius = '12px'; panel.appendChild(video);
-    const bar = document.createElement('div'); bar.className = 'nav';
-    const close = document.createElement('button'); close.className='btn secondary'; close.textContent='Close';
-    const setLeft = document.createElement('button'); setLeft.className='btn'; setLeft.textContent='Set Left dominant';
-    const setRight = document.createElement('button'); setRight.className='btn'; setRight.textContent='Set Right dominant';
-    bar.appendChild(close); bar.appendChild(setLeft); bar.appendChild(setRight); panel.appendChild(bar); overlay.appendChild(panel); document.body.appendChild(overlay);
+  function restoreAnswer(q) {
+    const val = app.answers[q.id];
+    if (val == null) return;
 
-    let stream; navigator.mediaDevices?.getUserMedia?.({ video:true, audio:false }).then(s => { stream = s; video.srcObject = s; }).catch(()=>{ tips.textContent = 'Could not access camera. You can still choose manually above.'; });
-    function cleanup(){ if (stream) stream.getTracks().forEach(t=>t.stop()); overlay.remove(); }
-    close.onclick = cleanup; setLeft.onclick = () => { app.answers['ocular_dominance'] = 'left'; cleanup(); validateAndToggleNext(); }; setRight.onclick = () => { app.answers['ocular_dominance'] = 'right'; cleanup(); validateAndToggleNext(); };
-  }
-
-  // ------- Validation & flow ---------------------------------------------------
-  function validate(qid) {
-    if (!SCHEMA) return false;
-    const q = SCHEMA.questions[qid]; if (!q) return true;
-    const ans = app.answers[qid];
-    if (q.required) {
-      if (q.type === 'text') return typeof ans === 'string' && ans.trim().length > 0;
-      if (q.type === 'slider') return ans !== undefined && ans !== '';
-      if (q.type === 'single') return !!ans;
-      if (q.type === 'multi') return Array.isArray(ans) && ans.length > 0;
+    if (q.type === 'single') {
+      el.qwrap.querySelectorAll('.option').forEach(btn => {
+        if (btn.getAttribute('data-value') === String(val)) btn.classList.add('selected');
+      });
+    } else if (q.type === 'multi') {
+      if (Array.isArray(val)) {
+        el.qwrap.querySelectorAll('.option').forEach(btn => {
+          if (val.includes(btn.getAttribute('data-value'))) btn.classList.add('selected');
+        });
+      }
+    } else if (q.type === 'slider') {
+      const range = el.qwrap.querySelector('input[type=range]');
+      const number = el.qwrap.querySelector('input[type=number]');
+      if (range) range.value = val;
+      if (number) number.value = val;
+    } else if (q.type === 'text') {
+      const ctrl = el.qwrap.querySelector('input, textarea');
+      if (ctrl) ctrl.value = val;
+    } else if (q.type === 'ocular_dominance') {
+      el.qwrap.querySelectorAll('.option').forEach(btn => {
+        if (btn.getAttribute('data-value') === String(val)) btn.classList.add('selected');
+      });
     }
+  }
+
+  function readAnswer(q) {
+    if (q.type === 'single') {
+      const sel = el.qwrap.querySelector('.option.selected');
+      return sel ? sel.getAttribute('data-value') : null;
+    }
+    if (q.type === 'multi') {
+      const arr = [];
+      el.qwrap.querySelectorAll('.option.selected').forEach(btn => arr.push(btn.getAttribute('data-value')));
+      return arr;
+    }
+    if (q.type === 'slider') {
+      const range = el.qwrap.querySelector('input[type=range]');
+      return range ? parseInt(range.value, 10) : null;
+    }
+    if (q.type === 'text') {
+      const ctrl = el.qwrap.querySelector('input, textarea');
+      return ctrl ? ctrl.value.trim() : '';
+    }
+    if (q.type === 'ocular_dominance') {
+      const sel = el.qwrap.querySelector('.option.selected');
+      return sel ? sel.getAttribute('data-value') : null;
+    }
+    return null;
+  }
+
+  function validate(q, ans) {
+    // Required check
+    if (q.required && (ans == null || (Array.isArray(ans) && ans.length === 0) || ans === '')) {
+      showError(q.id, 'Please choose an option to continue.');
+      return false;
+    }
+    // Optional: add specific validations per type if needed
+    clearError(q.id);
     return true;
   }
 
-  function validateAndToggleNext() { const id = app.order[app.idx]; const ok = validate(id); nextBtn.disabled = !ok; }
+  // Core routing helper — supports "when" and "byAnswerOf"
+  function getNextId(currId, answer) {
+    const q = app.schema?.questions?.[currId];
+    if (!q || q.next == null) return null;
 
-  function goNext() {
-    const id = app.order[app.idx]; if (!validate(id)) { nextBtn.disabled = true; return; }
-    try { localStorage.setItem('precon_answers', JSON.stringify(app.answers)); } catch {}
-    app.idx = Math.min(app.idx + 1, app.order.length - 1); buildPath();
-    if (SCHEMA.questions[app.order[app.idx]]?.type === 'review') { renderReview(); }
-    render();
-  }
+    if (typeof q.next === 'string') return q.next;
 
-  function goBack() { app.idx = Math.max(0, app.idx - 1); render(); }
+    if (typeof q.next === 'object') {
+      const nx = q.next;
 
-  function renderReview() {
-    formEl.classList.add('hidden'); reviewPanel.classList.remove('hidden'); submitted.classList.add('hidden');
-    const dl = document.createElement('dl');
-    for (const id of Object.keys(SCHEMA.questions)) {
-      if (id === 'review') continue; if (!app.order.includes(id)) continue;
-      const q = SCHEMA.questions[id]; const ans = app.answers[id];
-      if (ans == null || ans === '' || (Array.isArray(ans) && ans.length === 0)) continue;
-      const dt = document.createElement('dt'); dt.textContent = q.label; const dd = document.createElement('dd'); dd.textContent = Array.isArray(ans) ? ans.join(', ') : String(ans); dl.appendChild(dt); dl.appendChild(dd);
+      // Case 1: based on THIS question's answer
+      if (nx.when) {
+        if (Array.isArray(answer)) {
+          for (const v of answer) if (nx.when[v] != null) return nx.when[v];
+        } else if (answer != null && nx.when[answer] != null) {
+          return nx.when[answer];
+        }
+        if (nx.default != null) return nx.default;
+      }
+
+      // Case 2: based on ANOTHER question's answer
+      if (nx.byAnswerOf && nx.map) {
+        const key = app.answers[nx.byAnswerOf];
+        if (Array.isArray(key)) {
+          for (const v of key) if (nx.map[v] != null) return nx.map[v];
+        } else if (key != null && nx.map[key] != null) {
+          return nx.map[key];
+        }
+        if (nx.default != null) return nx.default;
+      }
     }
-    reviewContent.innerHTML = ''; reviewContent.appendChild(dl);
+    return null;
   }
 
-  function submit() {
-    const payload = { _meta: { title: SCHEMA.title, generatedAt: new Date().toISOString(), version: 'starter-v1-json' }, answers: app.answers };
-    output.value = JSON.stringify(payload, null, 2); reviewPanel.classList.add('hidden'); submitted.classList.remove('hidden');
+  function showReview() {
+    // Build a simple review list from answers
+    const list = document.createElement('div');
+    list.className = 'review-list';
+
+    const qids = Object.keys(app.answers);
+    qids.forEach(id => {
+      const q = getQ(id);
+      if (!q) return;
+      const row = document.createElement('div');
+      row.className = 'review-row';
+      const label = document.createElement('div');
+      label.className = 'review-label';
+      label.textContent = q.label || id;
+      const value = document.createElement('div');
+      value.className = 'review-value';
+      value.textContent = prettyAnswer(app.answers[id], q);
+      row.appendChild(label); row.appendChild(value);
+      list.appendChild(row);
+    });
+
+    el.reviewContent.innerHTML = '';
+    el.reviewContent.appendChild(list);
+
+    // Show review section, hide form
+    el.form.classList.add('hidden');
+    el.review.classList.remove('hidden');
+    el.submitted.classList.add('hidden');
+
+    // Submit button action builds payload and shows submitted view
+    document.getElementById('submitBtn').onclick = () => {
+      const payload = {
+        title: app.schema.title || 'Pre‑Consultation',
+        timestamp: new Date().toISOString(),
+        answers: app.answers,
+      };
+      const json = JSON.stringify(payload, null, 2);
+      el.output.value = json;
+      el.form.classList.add('hidden');
+      el.review.classList.add('hidden');
+      el.submitted.classList.remove('hidden');
+      el.output.focus();
+    };
   }
 
-  function copy() { output.select(); document.execCommand('copy'); }
+  function showForm() {
+    el.form.classList.remove('hidden');
+    el.review.classList.add('hidden');
+    el.submitted.classList.add('hidden');
+  }
 
-  function download() { const blob = new Blob([output.value], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'preconsultation_answers.json'; a.click(); URL.revokeObjectURL(url); }
+  function prettyAnswer(val, q) {
+    if (Array.isArray(val)) return val.join(', ');
+    if (val == null || val === '') return '—';
+    if (q && q.type === 'slider') return String(val);
+    return String(val);
+  }
 
-  function restart() { app.answers = {}; app.idx = 0; app.started = false; app.order = []; try { localStorage.removeItem('precon_answers'); } catch {} render(); }
+  function showError(id, msg) {
+    const e = document.getElementById('error_' + id);
+    if (e) { e.textContent = msg; e.style.display = 'block'; }
+  }
+  function clearError(id) {
+    const e = document.getElementById('error_' + id);
+    if (e) { e.textContent = ''; e.style.display = 'none'; }
+  }
 
-  // Wire buttons
-  backBtn.addEventListener('click', goBack);
-  nextBtn.addEventListener('click', goNext);
-  reviewBackBtn.addEventListener('click', () => { app.idx = Math.max(0, app.order.length - 2); render(); });
-  submitBtn.addEventListener('click', submit);
-  copyBtn.addEventListener('click', copy);
-  downloadBtn.addEventListener('click', download);
-  restartBtn.addEventListener('click', restart);
-
-  // Boot
-  loadSchema();
+  function clamp(v, min, max) { return Math.max(min, Math.min(max, isNaN(v) ? min : v)); }
+  function escapeHtml(s) { return String(s).replace(/[&<>"\u00A0]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\u00A0':'&nbsp;'}[c])); }
 })();
