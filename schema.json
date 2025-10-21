@@ -1,11 +1,11 @@
 {
-  "title": "Pre‑Consultation (Ophthalmology)",
+  "title": "Pre-Consultation (Ophthalmology)",
   "start": "consent",
   "questions": {
     "consent": {
       "id": "consent",
       "type": "single",
-      "label": "Do you consent to completing a short pre‑consultation questionnaire? Your answers will be reviewed by the clinic team.",
+      "label": "Do you consent to completing a short pre-consultation questionnaire? Your answers will be reviewed by the clinic team.",
       "help": "You can stop anytime. Your answers are kept on this device until you choose to submit.",
       "required": true,
       "input": { "style": "big" },
@@ -15,7 +15,6 @@
       ],
       "next": { "when": { "yes": "safety_screen", "no": "consent_no_reason" }, "default": "safety_screen" }
     },
-
     "consent_no_reason": {
       "id": "consent_no_reason",
       "type": "text",
@@ -24,7 +23,6 @@
       "input": { "placeholder": "Type your reason here…" },
       "next": "safety_screen"
     },
-
     "safety_screen": {
       "id": "safety_screen",
       "type": "single",
@@ -39,7 +37,6 @@
       ],
       "next": { "when": { "yes": "urgent_guidance", "unsure": "urgent_guidance" }, "default": "reason_for_visit" }
     },
-
     "urgent_guidance": {
       "id": "urgent_guidance",
       "type": "text",
@@ -49,7 +46,6 @@
       "preset": "These symptoms can be urgent. Please attend your nearest Emergency Department or see an optometrist today. You can still complete this form for your upcoming visit.",
       "next": "reason_for_visit"
     },
-
     "reason_for_visit": {
       "id": "reason_for_visit",
       "type": "single",
@@ -57,7 +53,7 @@
       "label": "What is the main reason for your appointment?",
       "input": { "style": "big" },
       "options": [
-        { "value": "glaucoma", "label": "Glaucoma check‑up / follow‑up / suspected glaucoma" },
+        { "value": "glaucoma", "label": "Glaucoma check-up / follow-up / suspected glaucoma" },
         { "value": "cataract", "label": "Cataract assessment or symptoms" },
         { "value": "other_issue", "label": "Other eye issue (briefly type)" },
         { "value": "general_check", "label": "General eye check / second opinion" },
@@ -65,8 +61,6 @@
       ],
       "next": "age"
     },
-
-    // ------------------ Minimal demographics (Common C) ----------------------
     "age": {
       "id": "age",
       "type": "slider",
@@ -76,7 +70,6 @@
       "input": { "min": 18, "max": 100, "step": 1, "showValue": true },
       "next": "ethnicity"
     },
-
     "ethnicity": {
       "id": "ethnicity",
       "type": "single",
@@ -93,7 +86,6 @@
       ],
       "next": { "when": { "other": "ethnicity_other" }, "default": "affected_eye" }
     },
-
     "ethnicity_other": {
       "id": "ethnicity_other",
       "type": "text",
@@ -102,7 +94,6 @@
       "input": { "placeholder": "e.g., Middle Eastern, Pacific Islander…" },
       "next": "affected_eye"
     },
-
     "affected_eye": {
       "id": "affected_eye",
       "type": "single",
@@ -117,7 +108,6 @@
       ],
       "next": "driving"
     },
-
     "driving": {
       "id": "driving",
       "type": "single",
@@ -129,10 +119,18 @@
         { "value": "occasional", "label": "Occasionally" },
         { "value": "not_driving", "label": "Not driving" }
       ],
-      "next": { "byAnswerOf": "reason_for_visit", "map": { "glaucoma": "A3_symptoms", "cataract": "B3_symptoms", "other_issue": "C_main_concern", "general_check": "D_main_symptom", "unsure_symptoms": "D_main_symptom" }, "default": "D_main_symptom" }
+      "next": {
+        "byAnswerOf": "reason_for_visit",
+        "map": {
+          "glaucoma": "A3_symptoms",
+          "cataract": "B3_symptoms",
+          "other_issue": "C_main_concern",
+          "general_check": "D_main_symptom",
+          "unsure_symptoms": "D_main_symptom"
+        },
+        "default": "D_main_symptom"
+      }
     },
-
-    // ======================= ROUTE A — GLAUCOMA ==============================
     "A3_symptoms": {
       "id": "A3_symptoms",
       "type": "multi",
@@ -151,22 +149,20 @@
       ],
       "next": "A4_type"
     },
-
     "A4_type": {
       "id": "A4_type",
       "type": "single",
       "label": "Glaucoma type told to you?",
       "input": { "style": "big" },
       "options": [
-        { "value": "poag", "label": "POAG / open‑angle" },
-        { "value": "angle_closure", "label": "Angle‑closure" },
+        { "value": "poag", "label": "POAG / open-angle" },
+        { "value": "angle_closure", "label": "Angle-closure" },
         { "value": "secondary", "label": "Secondary" },
         { "value": "none", "label": "No diagnosis" },
         { "value": "unsure", "label": "Not sure" }
       ],
       "next": "A4_last_check"
     },
-
     "A4_last_check": {
       "id": "A4_last_check",
       "type": "single",
@@ -180,7 +176,6 @@
       ],
       "next": "A4_iop_target"
     },
-
     "A4_iop_target": {
       "id": "A4_iop_target",
       "type": "text",
@@ -188,7 +183,6 @@
       "input": { "placeholder": "e.g., 14 mmHg right, 16 mmHg left, or ‘not sure’" },
       "next": "A4_tests"
     },
-
     "A4_tests": {
       "id": "A4_tests",
       "type": "multi",
@@ -202,7 +196,6 @@
       ],
       "next": "A4_fhx"
     },
-
     "A4_fhx": {
       "id": "A4_fhx",
       "type": "single",
@@ -215,7 +208,6 @@
       ],
       "next": "A5_drops"
     },
-
     "A5_drops": {
       "id": "A5_drops",
       "type": "multi",
@@ -225,7 +217,7 @@
         { "value": "latanoprost", "label": "Xalatan/Monopost (latanoprost)" },
         { "value": "bimatoprost", "label": "Lumigan/Ganfort (bimatoprost ± timolol)" },
         { "value": "travoprost", "label": "Travatan/Duotrav (travoprost ± timolol)" },
-        { "value": "timolol", "label": "Timoptol/Timoptol XE (timolol)" },
+        { "value": "timolol", "label": "Timoptol/Timolol XE (timolol)" },
         { "value": "betaxolol", "label": "Betoptic (betaxolol)" },
         { "value": "brimonidine", "label": "Alphagan/Alphagan P (brimonidine)" },
         { "value": "brinzolamide", "label": "Azopt/Azarga (brinzolamide ± timolol)" },
@@ -238,7 +230,6 @@
       ],
       "next": "A5_adherence"
     },
-
     "A5_adherence": {
       "id": "A5_adherence",
       "type": "single",
@@ -253,7 +244,6 @@
       ],
       "next": "A5_side_effects"
     },
-
     "A5_side_effects": {
       "id": "A5_side_effects",
       "type": "multi",
@@ -269,7 +259,6 @@
       ],
       "next": "A5_prev_procedures"
     },
-
     "A5_prev_procedures": {
       "id": "A5_prev_procedures",
       "type": "multi",
@@ -280,13 +269,12 @@
         { "value": "lpi", "label": "LPI — tiny laser hole in the iris" },
         { "value": "trab", "label": "Trabeculectomy — small flap to drain fluid" },
         { "value": "tube_migs", "label": "Tube/MIGS — tiny stent or tube" },
-        { "value": "cyclo", "label": "Cyclo‑laser — reduce fluid production" },
+        { "value": "cyclo", "label": "Cyclo-laser — reduce fluid production" },
         { "value": "none", "label": "None" },
         { "value": "unsure", "label": "Not sure" }
       ],
       "next": "A5_procedure_details"
     },
-
     "A5_procedure_details": {
       "id": "A5_procedure_details",
       "type": "text",
@@ -294,8 +282,6 @@
       "input": { "placeholder": "e.g., SLT right 2022; Trab left 2018" },
       "next": "E1_history"
     },
-
-    // ======================= ROUTE B — CATARACT ==============================
     "B3_symptoms": {
       "id": "B3_symptoms",
       "type": "multi",
@@ -311,7 +297,6 @@
       ],
       "next": "B3_duration"
     },
-
     "B3_duration": {
       "id": "B3_duration",
       "type": "single",
@@ -326,7 +311,6 @@
       ],
       "next": "B3_tasks"
     },
-
     "B3_tasks": {
       "id": "B3_tasks",
       "type": "multi",
@@ -342,7 +326,6 @@
       ],
       "next": "B3_past_procedures"
     },
-
     "B3_past_procedures": {
       "id": "B3_past_procedures",
       "type": "multi",
@@ -355,7 +338,6 @@
       ],
       "next": "B3_proc_details"
     },
-
     "B3_proc_details": {
       "id": "B3_proc_details",
       "type": "text",
@@ -363,7 +345,6 @@
       "input": { "placeholder": "e.g., Right 2021; Left YAG 2023" },
       "next": "B4_discuss"
     },
-
     "B4_discuss": {
       "id": "B4_discuss",
       "type": "single",
@@ -376,20 +357,15 @@
       ],
       "next": { "when": { "yes": "B4_info", "unsure": "B4_info" }, "default": "B4_pref_goal" }
     },
-
     "B4_info": {
       "id": "B4_info",
       "type": "text",
       "required": false,
       "label": "Lens options (neutral overview)",
       "input": { "textarea": true, "readonly": true },
-      "preset": "Monofocal: usually clearest at one distance; reading glasses common after surgery.
-Toric (astigmatism‑correcting): may reduce glasses at chosen distance.
-Multifocal/EDOF: may reduce glasses for more distances but can cause halos/glare; not suitable for everyone.
-No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle.",
+      "preset": "Monofocal: usually clearest at one distance; reading glasses common after surgery.\nToric (astigmatism-correcting): may reduce glasses at chosen distance.\nMultifocal/EDOF: may reduce glasses for more distances but can cause halos/glare; not suitable for everyone.\nNo lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle.",
       "next": "B4_pref_goal"
     },
-
     "B4_pref_goal": {
       "id": "B4_pref_goal",
       "type": "single",
@@ -403,7 +379,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "B4_night_importance"
     },
-
     "B4_night_importance": {
       "id": "B4_night_importance",
       "type": "single",
@@ -416,7 +391,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "B4_reading_glasses"
     },
-
     "B4_reading_glasses": {
       "id": "B4_reading_glasses",
       "type": "single",
@@ -429,7 +403,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "B4_prior_refractive"
     },
-
     "B4_prior_refractive": {
       "id": "B4_prior_refractive",
       "type": "single",
@@ -442,7 +415,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": { "when": { "yes": "B4_prior_refractive_details" }, "default": "B4_astigmatism" }
     },
-
     "B4_prior_refractive_details": {
       "id": "B4_prior_refractive_details",
       "type": "text",
@@ -450,8 +422,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       "input": { "placeholder": "e.g., LASIK 2010" },
       "next": "B4_astigmatism"
     },
-
-    
     "B4_astigmatism": {
       "id": "B4_astigmatism",
       "type": "single",
@@ -464,11 +434,10 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "B5_alpha_blockers"
     },
-
     "B5_alpha_blockers": {
       "id": "B5_alpha_blockers",
       "type": "single",
-      "label": "Alpha‑blockers (e.g., tamsulosin/Flomax)?",
+      "label": "Alpha-blockers (e.g., tamsulosin/Flomax)?",
       "input": { "style": "big" },
       "options": [
         { "value": "yes", "label": "Yes" },
@@ -477,7 +446,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "B5_blood_thinners"
     },
-
     "B5_blood_thinners": {
       "id": "B5_blood_thinners",
       "type": "single",
@@ -490,7 +458,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": { "when": { "yes": "B5_blood_thinners_which" }, "default": "B5_lie_flat" }
     },
-
     "B5_blood_thinners_which": {
       "id": "B5_blood_thinners_which",
       "type": "text",
@@ -498,7 +465,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       "input": { "placeholder": "e.g., apixaban (Eliquis)" },
       "next": "B5_lie_flat"
     },
-
     "B5_lie_flat": {
       "id": "B5_lie_flat",
       "type": "single",
@@ -511,7 +477,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": { "when": { "no": "B5_lie_flat_followup", "unsure": "B5_lie_flat_followup" }, "default": "B5_ocular_dom" }
     },
-
     "B5_lie_flat_followup": {
       "id": "B5_lie_flat_followup",
       "type": "single",
@@ -524,16 +489,13 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "B5_ocular_dom"
     },
-
     "B5_ocular_dom": {
       "id": "B5_ocular_dom",
       "type": "ocular_dominance",
       "label": "Ocular dominance (optional quick check)",
-      "help": "Use the finger‑circle method or try the webcam helper.",
+      "help": "Use the finger-circle method or try the webcam helper.",
       "next": "E1_history"
     },
-
-    // ======================= ROUTE C — OTHER ISSUE ===========================
     "C_main_concern": {
       "id": "C_main_concern",
       "type": "text",
@@ -541,7 +503,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       "input": { "placeholder": "Free text" },
       "next": "C_symptoms"
     },
-
     "C_symptoms": {
       "id": "C_symptoms",
       "type": "multi",
@@ -558,7 +519,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "C_prev_treatments"
     },
-
     "C_prev_treatments": {
       "id": "C_prev_treatments",
       "type": "multi",
@@ -572,7 +532,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "C_details"
     },
-
     "C_details": {
       "id": "C_details",
       "type": "text",
@@ -580,15 +539,12 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       "input": { "placeholder": "Optional" },
       "next": "E1_history"
     },
-
-    // ======================= ROUTE D — ESSENTIALS ============================
     "D_main_symptom": {
       "id": "D_main_symptom",
       "type": "text",
       "label": "Main symptom",
       "next": "D_duration"
     },
-
     "D_duration": {
       "id": "D_duration",
       "type": "single",
@@ -603,7 +559,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "D_tasks"
     },
-
     "D_tasks": {
       "id": "D_tasks",
       "type": "multi",
@@ -618,7 +573,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "D_prev_eye"
     },
-
     "D_prev_eye": {
       "id": "D_prev_eye",
       "type": "multi",
@@ -632,7 +586,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "D_glasses"
     },
-
     "D_glasses": {
       "id": "D_glasses",
       "type": "single",
@@ -647,7 +600,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "D_contacts"
     },
-
     "D_contacts": {
       "id": "D_contacts",
       "type": "single",
@@ -661,8 +613,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "E1_history"
     },
-
-    // ======================= COMMON E — EVERYONE =============================
     "E1_history": {
       "id": "E1_history",
       "type": "multi",
@@ -680,7 +630,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "E1_prev_surgery"
     },
-
     "E1_prev_surgery": {
       "id": "E1_prev_surgery",
       "type": "text",
@@ -688,7 +637,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       "input": { "placeholder": "e.g., cataract left 2021; SLT right 2022" },
       "next": "E1_refractive_glasses"
     },
-
     "E1_refractive_glasses": {
       "id": "E1_refractive_glasses",
       "type": "single",
@@ -703,7 +651,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "E1_contacts"
     },
-
     "E1_contacts": {
       "id": "E1_contacts",
       "type": "single",
@@ -717,7 +664,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "E2_medical"
     },
-
     "E2_medical": {
       "id": "E2_medical",
       "type": "multi",
@@ -738,7 +684,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "E2_diabetes_details"
     },
-
     "E2_diabetes_details": {
       "id": "E2_diabetes_details",
       "type": "text",
@@ -746,11 +691,10 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       "input": { "placeholder": "Optional" },
       "next": "E2_steroids"
     },
-
     "E2_steroids": {
       "id": "E2_steroids",
       "type": "single",
-      "label": "Long‑term steroid use?",
+      "label": "Long-term steroid use?",
       "input": { "style": "big" },
       "options": [
         { "value": "no", "label": "No" },
@@ -762,7 +706,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": { "when": { "pills": "E2_steroids_details", "inhalers": "E2_steroids_details", "creams": "E2_steroids_details", "eye_drops": "E2_steroids_details" }, "default": "E2_mobility" }
     },
-
     "E2_steroids_details": {
       "id": "E2_steroids_details",
       "type": "text",
@@ -770,7 +713,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       "input": { "placeholder": "e.g., Prednisone 5mg for 2 years" },
       "next": "E2_mobility"
     },
-
     "E2_mobility": {
       "id": "E2_mobility",
       "type": "single",
@@ -783,7 +725,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "E3_meds_quick"
     },
-
     "E3_meds_quick": {
       "id": "E3_meds_quick",
       "type": "multi",
@@ -797,7 +738,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "E3_meds_free"
     },
-
     "E3_meds_free": {
       "id": "E3_meds_free",
       "type": "text",
@@ -805,7 +745,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       "input": { "placeholder": "Add anything not covered above" },
       "next": "E3_allergies"
     },
-
     "E3_allergies": {
       "id": "E3_allergies",
       "type": "single",
@@ -817,14 +756,12 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": { "when": { "yes": "E3_allergies_list" }, "default": "E4_family_glaucoma" }
     },
-
     "E3_allergies_list": {
       "id": "E3_allergies_list",
       "type": "text",
       "label": "List allergies (e.g., medications, latex; add iodine if clinic prefers)",
       "next": "E4_family_glaucoma"
     },
-
     "E4_family_glaucoma": {
       "id": "E4_family_glaucoma",
       "type": "single",
@@ -837,7 +774,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": { "when": { "yes": "E4_family_glaucoma_who" }, "default": "E4_family_other" }
     },
-
     "E4_family_glaucoma_who": {
       "id": "E4_family_glaucoma_who",
       "type": "text",
@@ -845,7 +781,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       "input": { "placeholder": "e.g., Mother, brother" },
       "next": "E4_family_other"
     },
-
     "E4_family_other": {
       "id": "E4_family_other",
       "type": "multi",
@@ -859,7 +794,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": "E4_family_other_who"
     },
-
     "E4_family_other_who": {
       "id": "E4_family_other_who",
       "type": "text",
@@ -867,7 +801,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       "input": { "placeholder": "e.g., Father, sister" },
       "next": "E5_support"
     },
-
     "E5_support": {
       "id": "E5_support",
       "type": "single",
@@ -879,14 +812,12 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       ],
       "next": { "when": { "yes": "E5_language" }, "default": "E5_anything_else" }
     },
-
     "E5_language": {
       "id": "E5_language",
       "type": "text",
       "label": "Language",
       "next": "E5_anything_else"
     },
-
     "E5_anything_else": {
       "id": "E5_anything_else",
       "type": "text",
@@ -894,7 +825,6 @@ No lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle."
       "input": { "placeholder": "Optional" },
       "next": "review"
     },
-
     "review": { "id": "review", "type": "review" }
   }
 }
