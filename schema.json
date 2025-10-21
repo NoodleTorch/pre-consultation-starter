@@ -28,7 +28,7 @@
       "type": "single",
       "required": true,
       "label": "In the last 7 days, have you had any of the following?",
-      "help": "• Sudden drop in vision • Painful, red eye with headache, nausea, or rainbow halos • A dark curtain over vision or many new flashes/floaters • Recent eye injury or problems after eye surgery",
+      "help": "• Sudden drop in vision/n• Severe eye pain/redness",
       "input": { "style": "big" },
       "options": [
         { "value": "yes", "label": "Yes" },
@@ -65,16 +65,30 @@
       "id": "age",
       "type": "slider",
       "required": true,
-      "label": "How old are you?",
+      "label": "Age",
       "help": "Slide or tap to set your age. You can also type a number.",
       "input": { "min": 18, "max": 100, "step": 1, "showValue": true },
-      "next": "ethnicity"
+      "next": "sex_at_birth"
     },
+    "sex_at_birth": {
+  "id": "sex_at_birth",
+  "type": "single",
+  "required": true,
+  "label": "Gender",
+  "input": { "style": "big" },
+  "options": [
+    { "value": "male", "label": "Male" },
+    { "value": "female", "label": "Female" },
+    { "value": "intersex_other", "label": "Other" },
+    { "value": "prefer_not", "label": "Prefer not to say" }
+  ],
+  "next": "ethnicity"
+},
     "ethnicity": {
       "id": "ethnicity",
       "type": "single",
       "required": true,
-      "label": "Ancestry (for risk assessment)",
+      "label": "Ancestry",
       "input": { "style": "big" },
       "options": [
         { "value": "caucasian", "label": "Caucasian" },
@@ -432,17 +446,21 @@
         { "value": "no", "label": "No" },
         { "value": "unsure", "label": "Not sure" }
       ],
-      "next": "B5_alpha_blockers"
+      "next": {
+      "byAnswerOf": "sex_at_birth",
+      "map": { "male": "B5_prostate_meds" },
+      "default": "B5_blood_thinners"
     },
-    "B5_alpha_blockers": {
-      "id": "B5_alpha_blockers",
+    "B5_prostate_meds": {
+      "id": "B5_prostate_meds",
       "type": "single",
-      "label": "Alpha-blockers (e.g., tamsulosin/Flomax)?",
+      "label": "Do you take any medications for prostate or urinary symptoms?",
+      "help": "Examples: tamsulosin (Flomax), duodart",
       "input": { "style": "big" },
       "options": [
         { "value": "yes", "label": "Yes" },
         { "value": "no", "label": "No" },
-        { "value": "unsure", "label": "Not sure" }
+        { "value": "unsure", "label": "I’m not sure" }
       ],
       "next": "B5_blood_thinners"
     },
@@ -828,3 +846,4 @@
     "review": { "id": "review", "type": "review" }
   }
 }
+
