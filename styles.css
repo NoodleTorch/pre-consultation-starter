@@ -64,7 +64,8 @@ main{max-width: 840px; margin: 0 auto 80px;}
 .help{
   margin: 0 0 14px 0;
   color: var(--muted);
-  font-size: 1rem;
+  font-size: 1.2rem;
+  line-height: 1.5;
 }
 
 /* ---- Options grid / tiles (SINGLE + MULTI) ---- */
@@ -95,6 +96,27 @@ main{max-width: 840px; margin: 0 auto 80px;}
   background: var(--accent-weak);
   box-shadow: 0 4px 0 rgba(37,99,235,.25);
 }
+/* Single-choice: lay tiles side-by-side and size to content */
+.options.single{
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tile-gap);
+}
+
+/* Key override: single-choice tiles no longer stretch full width */
+.options.single .option{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;                  /* fit to text */
+  min-width: 120px;             /* still a big tap target */
+  padding-inline: calc(var(--tile-pad) * 1.25);
+  text-align: center;           /* centered label looks better on small tiles */
+}
+
+/* Keep multi-select filling columns */
+.options.multi .option{ width: 100%; }
+
 
 /* Make multi-select tiles wrap to two columns on wider screens */
 @media (min-width: 720px){
