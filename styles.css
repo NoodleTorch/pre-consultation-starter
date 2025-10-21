@@ -66,6 +66,7 @@ main{max-width: 840px; margin: 0 auto 80px;}
   color: var(--muted);
   font-size: 1.2rem;
   line-height: 1.5;
+  white-space: pre-line;   /* make \n show as real line breaks */
 }
 
 /* ---- Options grid / tiles (SINGLE + MULTI) ---- */
