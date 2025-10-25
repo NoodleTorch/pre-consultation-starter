@@ -450,6 +450,7 @@
       "byAnswerOf": "sex_at_birth",
       "map": { "male": "B5_prostate_meds" },
       "default": "B5_blood_thinners"
+      }  
     },
     "B5_prostate_meds": {
       "id": "B5_prostate_meds",
@@ -846,5 +847,4 @@
     "review": { "id": "review", "type": "review" }
   }
 }
-
 
