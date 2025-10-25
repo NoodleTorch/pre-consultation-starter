@@ -28,7 +28,7 @@
       "type": "single",
       "required": true,
       "label": "In the last 7 days, have you had any of the following?",
-      "help": "• Sudden drop in vision/n• Severe eye pain/redness",
+      "help": "• Sudden drop in vision\n• Severe eye pain/redness",
       "input": { "style": "big" },
       "options": [
         { "value": "yes", "label": "Yes" },
@@ -71,18 +71,18 @@
       "next": "sex_at_birth"
     },
     "sex_at_birth": {
-  "id": "sex_at_birth",
-  "type": "single",
-  "required": true,
-  "label": "Gender",
-  "input": { "style": "big" },
-  "options": [
-    { "value": "male", "label": "Male" },
-    { "value": "female", "label": "Female" },
-    { "value": "intersex_other", "label": "Other" },
-    { "value": "prefer_not", "label": "Prefer not to say" }
-  ],
-  "next": "ethnicity"
+      "id": "sex_at_birth",
+      "type": "single",
+      "required": true,
+      "label": "Gender",
+      "input": { "style": "big" },
+      "options": [
+        { "value": "male", "label": "Male" },
+        { "value": "female", "label": "Female" },
+        { "value": "intersex_other", "label": "Other" },
+        { "value": "prefer_not", "label": "Prefer not to say" }
+      ],
+      "next": "ethnicity"
 },
     "ethnicity": {
       "id": "ethnicity",
@@ -846,4 +846,5 @@
     "review": { "id": "review", "type": "review" }
   }
 }
+
 
