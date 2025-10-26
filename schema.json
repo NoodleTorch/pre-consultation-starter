@@ -10,25 +10,18 @@
       "required": true,
       "input": { "style": "big" },
       "options": [
-        { "value": "yes", "label": "Yes, I agree" },
-        { "value": "no", "label": "No, not today" }
+        { "value": "ok", "label": "Yes, I consent — continue" }
       ],
-      "next": { "when": { "yes": "safety_screen", "no": "consent_no_reason" }, "default": "safety_screen" }
-    },
-    "consent_no_reason": {
-      "id": "consent_no_reason",
-      "type": "text",
-      "required": false,
-      "label": "Please explain why (optional)",
-      "input": { "placeholder": "Type your reason here…" },
       "next": "safety_screen"
     },
+
     "safety_screen": {
       "id": "safety_screen",
       "type": "single",
       "required": true,
       "label": "In the last 7 days, have you had any of the following?",
-      "help": "• Sudden drop in vision\n• Severe eye pain/redness",
+      "help": "• Sudden loss of vision
+• Severe eye pain/redness",
       "input": { "style": "big" },
       "options": [
         { "value": "yes", "label": "Yes" },
@@ -37,15 +30,18 @@
       ],
       "next": { "when": { "yes": "urgent_guidance", "unsure": "urgent_guidance" }, "default": "reason_for_visit" }
     },
+
     "urgent_guidance": {
       "id": "urgent_guidance",
-      "type": "text",
+      "type": "single",
       "required": false,
       "label": "Important — please read",
-      "input": { "textarea": true, "readonly": true },
-      "preset": "These symptoms can be urgent. Please attend your nearest Emergency Department or see an optometrist today. You can still complete this form for your upcoming visit.",
+      "help": "These symptoms can be urgent. Please attend your nearest Emergency Department or see an optometrist today. You can still complete this form for your upcoming visit.",
+      "input": { "style": "big" },
+      "options": [ { "value": "ok", "label": "OK, continue" } ],
       "next": "reason_for_visit"
     },
+
     "reason_for_visit": {
       "id": "reason_for_visit",
       "type": "single",
@@ -53,14 +49,15 @@
       "label": "What is the main reason for your appointment?",
       "input": { "style": "big" },
       "options": [
-        { "value": "glaucoma", "label": "Glaucoma check-up / follow-up / suspected glaucoma" },
+        { "value": "glaucoma", "label": "Glaucoma / eye pressure check" },
         { "value": "cataract", "label": "Cataract assessment or symptoms" },
-        { "value": "other_issue", "label": "Other eye issue (briefly type)" },
+        { "value": "other_issue", "label": "Other eye issue (type briefly)" },
         { "value": "general_check", "label": "General eye check / second opinion" },
         { "value": "unsure_symptoms", "label": "New or worsening symptoms (not sure what)" }
       ],
       "next": "age"
     },
+
     "age": {
       "id": "age",
       "type": "slider",
@@ -70,6 +67,7 @@
       "input": { "min": 18, "max": 100, "step": 1, "showValue": true },
       "next": "sex_at_birth"
     },
+
     "sex_at_birth": {
       "id": "sex_at_birth",
       "type": "single",
@@ -79,16 +77,17 @@
       "options": [
         { "value": "male", "label": "Male" },
         { "value": "female", "label": "Female" },
-        { "value": "intersex_other", "label": "Other" },
+        { "value": "intersex_other", "label": "Intersex / another option" },
         { "value": "prefer_not", "label": "Prefer not to say" }
       ],
       "next": "ethnicity"
-},
+    },
+
     "ethnicity": {
       "id": "ethnicity",
       "type": "single",
       "required": true,
-      "label": "Ancestry",
+      "label": "Ancestry (for risk assessment)",
       "input": { "style": "big" },
       "options": [
         { "value": "caucasian", "label": "Caucasian" },
@@ -100,6 +99,7 @@
       ],
       "next": { "when": { "other": "ethnicity_other" }, "default": "affected_eye" }
     },
+
     "ethnicity_other": {
       "id": "ethnicity_other",
       "type": "text",
@@ -108,11 +108,12 @@
       "input": { "placeholder": "e.g., Middle Eastern, Pacific Islander…" },
       "next": "affected_eye"
     },
+
     "affected_eye": {
       "id": "affected_eye",
       "type": "single",
       "required": true,
-      "label": "Which eye is affected most?",
+      "label": "Which eye bothers you the most?",
       "input": { "style": "big" },
       "options": [
         { "value": "left", "label": "Left" },
@@ -122,11 +123,12 @@
       ],
       "next": "driving"
     },
+
     "driving": {
       "id": "driving",
       "type": "single",
       "required": true,
-      "label": "Are you currently driving?",
+      "label": "Do you currently drive?",
       "input": { "style": "big" },
       "options": [
         { "value": "regular", "label": "Yes, regularly" },
@@ -138,13 +140,14 @@
         "map": {
           "glaucoma": "A3_symptoms",
           "cataract": "B3_symptoms",
-          "other_issue": "C_main_concern",
+          "other_issue": "D_main_symptom",
           "general_check": "D_main_symptom",
           "unsure_symptoms": "D_main_symptom"
         },
         "default": "D_main_symptom"
       }
     },
+
     "A3_symptoms": {
       "id": "A3_symptoms",
       "type": "multi",
@@ -163,53 +166,71 @@
       ],
       "next": "A4_type"
     },
+
     "A4_type": {
       "id": "A4_type",
       "type": "single",
-      "label": "Glaucoma type told to you?",
+      "label": "Has a clinician told you the type of glaucoma?",
       "input": { "style": "big" },
       "options": [
-        { "value": "poag", "label": "POAG / open-angle" },
+        { "value": "poag", "label": "Open-angle (POAG)" },
         { "value": "angle_closure", "label": "Angle-closure" },
         { "value": "secondary", "label": "Secondary" },
-        { "value": "none", "label": "No diagnosis" },
+        { "value": "none", "label": "No glaucoma diagnosis" },
         { "value": "unsure", "label": "Not sure" }
       ],
       "next": "A4_last_check"
     },
+
     "A4_last_check": {
       "id": "A4_last_check",
       "type": "single",
       "label": "When was your last glaucoma check?",
       "input": { "style": "big" },
       "options": [
-        { "value": "lt3m", "label": "< 3 months" },
-        { "value": "3to12m", "label": "3–12 months" },
-        { "value": "gt12m", "label": "> 12 months" },
+        { "value": "lt3m", "label": "Under 3 months ago" },
+        { "value": "3to12m", "label": "3–12 months ago" },
+        { "value": "gt12m", "label": "More than 12 months ago" },
         { "value": "unsure", "label": "Not sure" }
       ],
-      "next": "A4_iop_target"
+      "next": "A4_iop_know"
     },
-    "A4_iop_target": {
-      "id": "A4_iop_target",
+
+    "A4_iop_know": {
+      "id": "A4_iop_know",
+      "type": "single",
+      "label": "Do you know your usual eye pressure (IOP) or target?",
+      "input": { "style": "big" },
+      "options": [
+        { "value": "yes", "label": "Yes" },
+        { "value": "no", "label": "No" },
+        { "value": "unsure", "label": "Not sure" }
+      ],
+      "next": { "when": { "yes": "A4_iop_value" }, "default": "A4_tests" }
+    },
+
+    "A4_iop_value": {
+      "id": "A4_iop_value",
       "type": "text",
-      "label": "Eye pressure (IOP) target/usual (if known)",
-      "input": { "placeholder": "e.g., 14 mmHg right, 16 mmHg left, or ‘not sure’" },
+      "label": "Enter IOP/target (if known)",
+      "input": { "placeholder": "e.g., Right 14, Left 16" },
       "next": "A4_tests"
     },
+
     "A4_tests": {
       "id": "A4_tests",
       "type": "multi",
-      "label": "Tests you’ve had (tap all)",
+      "label": "Which tests have you had? (tap all)",
       "options": [
-        { "value": "vf", "label": "Visual field" },
-        { "value": "oct", "label": "OCT optic nerve" },
+        { "value": "vf", "label": "Visual field (button-press test)" },
+        { "value": "oct", "label": "OCT of the optic nerve" },
         { "value": "cct", "label": "Corneal thickness" },
         { "value": "gonio", "label": "Angle check (gonioscopy)" },
         { "value": "unsure", "label": "Not sure" }
       ],
       "next": "A4_fhx"
     },
+
     "A4_fhx": {
       "id": "A4_fhx",
       "type": "single",
@@ -222,6 +243,7 @@
       ],
       "next": "A5_drops"
     },
+
     "A5_drops": {
       "id": "A5_drops",
       "type": "multi",
@@ -244,6 +266,7 @@
       ],
       "next": "A5_adherence"
     },
+
     "A5_adherence": {
       "id": "A5_adherence",
       "type": "single",
@@ -258,6 +281,7 @@
       ],
       "next": "A5_side_effects"
     },
+
     "A5_side_effects": {
       "id": "A5_side_effects",
       "type": "multi",
@@ -273,6 +297,7 @@
       ],
       "next": "A5_prev_procedures"
     },
+
     "A5_prev_procedures": {
       "id": "A5_prev_procedures",
       "type": "multi",
@@ -289,6 +314,7 @@
       ],
       "next": "A5_procedure_details"
     },
+
     "A5_procedure_details": {
       "id": "A5_procedure_details",
       "type": "text",
@@ -296,13 +322,14 @@
       "input": { "placeholder": "e.g., SLT right 2022; Trab left 2018" },
       "next": "E1_history"
     },
+
     "B3_symptoms": {
       "id": "B3_symptoms",
       "type": "multi",
-      "label": "Cataract symptoms (tap all)",
+      "label": "Cataract symptoms (tap all that apply)",
       "options": [
-        { "value": "blurry", "label": "Blurry/cloudy vision" },
-        { "value": "glare", "label": "Glare/halos" },
+        { "value": "blurry", "label": "Blurry or cloudy vision" },
+        { "value": "glare", "label": "Glare or halos" },
         { "value": "night_driving", "label": "Trouble with night driving" },
         { "value": "faded_colours", "label": "Colours look faded" },
         { "value": "mono_double", "label": "Double vision in one eye" },
@@ -311,35 +338,38 @@
       ],
       "next": "B3_duration"
     },
+
     "B3_duration": {
       "id": "B3_duration",
       "type": "single",
-      "label": "Duration of symptoms",
+      "label": "How long have these symptoms been going on?",
       "input": { "style": "big" },
       "options": [
-        { "value": "lt1m", "label": "< 1 month" },
+        { "value": "lt1m", "label": "Under 1 month" },
         { "value": "1to6m", "label": "1–6 months" },
         { "value": "6to24m", "label": "6–24 months" },
-        { "value": "gt2y", "label": "> 2 years" },
+        { "value": "gt2y", "label": "More than 2 years" },
         { "value": "unsure", "label": "Not sure" }
       ],
       "next": "B3_tasks"
     },
+
     "B3_tasks": {
       "id": "B3_tasks",
       "type": "multi",
-      "label": "Tasks hardest now (tap all)",
+      "label": "Which everyday tasks are hardest now? (tap all)",
       "options": [
         { "value": "reading", "label": "Reading" },
         { "value": "night_driving", "label": "Night driving" },
         { "value": "computer", "label": "Computer" },
         { "value": "tv", "label": "TV" },
         { "value": "hobbies", "label": "Hobbies" },
-        { "value": "stairs", "label": "Stairs/falls" },
+        { "value": "stairs", "label": "Stairs / avoiding falls" },
         { "value": "none", "label": "None" }
       ],
       "next": "B3_past_procedures"
     },
+
     "B3_past_procedures": {
       "id": "B3_past_procedures",
       "type": "multi",
@@ -352,6 +382,7 @@
       ],
       "next": "B3_proc_details"
     },
+
     "B3_proc_details": {
       "id": "B3_proc_details",
       "type": "text",
@@ -359,10 +390,11 @@
       "input": { "placeholder": "e.g., Right 2021; Left YAG 2023" },
       "next": "B4_discuss"
     },
+
     "B4_discuss": {
       "id": "B4_discuss",
       "type": "single",
-      "label": "Would you like to discuss cataract surgery with the doctor?",
+      "label": "Would you like to talk about cataract surgery with the doctor?",
       "input": { "style": "big" },
       "options": [
         { "value": "yes", "label": "Yes" },
@@ -371,15 +403,20 @@
       ],
       "next": { "when": { "yes": "B4_info", "unsure": "B4_info" }, "default": "B4_pref_goal" }
     },
+
     "B4_info": {
       "id": "B4_info",
       "type": "text",
       "required": false,
-      "label": "Lens options (neutral overview)",
+      "label": "Lens options (quick neutral overview)",
       "input": { "textarea": true, "readonly": true },
-      "preset": "Monofocal: usually clearest at one distance; reading glasses common after surgery.\nToric (astigmatism-correcting): may reduce glasses at chosen distance.\nMultifocal/EDOF: may reduce glasses for more distances but can cause halos/glare; not suitable for everyone.\nNo lens is perfect. Your surgeon will tailor advice to your eyes and lifestyle.",
+      "preset": "Monofocal: clearest at one distance; reading glasses are common after surgery.
+Toric (astigmatism-correcting): may reduce glasses at the chosen distance.
+Multifocal/EDOF: may reduce glasses for more distances but can cause halos/glare and aren’t for everyone.
+No lens is perfect. Your surgeon will advise what suits your eyes and lifestyle.",
       "next": "B4_pref_goal"
     },
+
     "B4_pref_goal": {
       "id": "B4_pref_goal",
       "type": "single",
@@ -393,6 +430,7 @@
       ],
       "next": "B4_night_importance"
     },
+
     "B4_night_importance": {
       "id": "B4_night_importance",
       "type": "single",
@@ -405,18 +443,20 @@
       ],
       "next": "B4_reading_glasses"
     },
+
     "B4_reading_glasses": {
       "id": "B4_reading_glasses",
       "type": "single",
-      "label": "Are you comfortable using reading glasses after surgery?",
+      "label": "Are you okay using reading glasses after surgery?",
       "input": { "style": "big" },
       "options": [
         { "value": "yes", "label": "Yes" },
-        { "value": "avoid", "label": "Prefer to avoid" },
+        { "value": "avoid", "label": "I’d prefer to avoid them" },
         { "value": "unsure", "label": "Not sure" }
       ],
       "next": "B4_prior_refractive"
     },
+
     "B4_prior_refractive": {
       "id": "B4_prior_refractive",
       "type": "single",
@@ -427,15 +467,38 @@
         { "value": "no", "label": "No" },
         { "value": "unsure", "label": "Not sure" }
       ],
-      "next": { "when": { "yes": "B4_prior_refractive_details" }, "default": "B4_astigmatism" }
+      "next": { "when": { "yes": "B4_prior_refractive_type" }, "default": "B4_astigmatism" }
     },
-    "B4_prior_refractive_details": {
-      "id": "B4_prior_refractive_details",
-      "type": "text",
-      "label": "Type/year (if known)",
-      "input": { "placeholder": "e.g., LASIK 2010" },
+
+    "B4_prior_refractive_type": {
+      "id": "B4_prior_refractive_type",
+      "type": "single",
+      "label": "Which type of laser vision correction?",
+      "input": { "style": "big" },
+      "options": [
+        { "value": "lasik", "label": "LASIK" },
+        { "value": "prk", "label": "PRK" },
+        { "value": "smile", "label": "SMILE" },
+        { "value": "not_sure", "label": "Not sure" }
+      ],
+      "next": { "when": { "not_sure": "B4_astigmatism" }, "default": "B4_prior_refractive_when" }
+    },
+
+    "B4_prior_refractive_when": {
+      "id": "B4_prior_refractive_when",
+      "type": "single",
+      "label": "When was it done?",
+      "input": { "style": "big" },
+      "options": [
+        { "value": "lt1y", "label": "Within the last year" },
+        { "value": "1to3y", "label": "1–3 years ago" },
+        { "value": "3to5y", "label": "3–5 years ago" },
+        { "value": "gt5y", "label": "Over 5 years ago" },
+        { "value": "unsure", "label": "Not sure" }
+      ],
       "next": "B4_astigmatism"
     },
+
     "B4_astigmatism": {
       "id": "B4_astigmatism",
       "type": "single",
@@ -447,16 +510,17 @@
         { "value": "unsure", "label": "Not sure" }
       ],
       "next": {
-      "byAnswerOf": "sex_at_birth",
-      "map": { "male": "B5_prostate_meds" },
-      "default": "B5_blood_thinners"
-      }  
+        "byAnswerOf": "sex_at_birth",
+        "map": { "male": "B5_prostate_meds" },
+        "default": "B5_blood_thinners"
+      }
     },
+
     "B5_prostate_meds": {
       "id": "B5_prostate_meds",
       "type": "single",
-      "label": "Do you take any medications for prostate or urinary symptoms?",
-      "help": "Examples: tamsulosin (Flomax), duodart",
+      "label": "Do you take any medicines for prostate or urinary symptoms?",
+      "help": "Examples: tamsulosin (Flomax), alfuzosin, terazosin, doxazosin, silodosin, Duodart.",
       "input": { "style": "big" },
       "options": [
         { "value": "yes", "label": "Yes" },
@@ -465,29 +529,50 @@
       ],
       "next": "B5_blood_thinners"
     },
+
     "B5_blood_thinners": {
       "id": "B5_blood_thinners",
       "type": "single",
-      "label": "Blood thinners (e.g., warfarin, apixaban, rivaroxaban, clopidogrel)?",
+      "label": "Do you take any blood-thinning medicines?",
+      "help": "Examples: warfarin, apixaban (Eliquis), rivaroxaban (Xarelto), clopidogrel (Plavix).",
       "input": { "style": "big" },
       "options": [
         { "value": "yes", "label": "Yes" },
         { "value": "no", "label": "No" },
-        { "value": "unsure", "label": "Not sure" }
+        { "value": "unsure", "label": "I’m not sure" }
       ],
       "next": { "when": { "yes": "B5_blood_thinners_which" }, "default": "B5_lie_flat" }
     },
+
     "B5_blood_thinners_which": {
       "id": "B5_blood_thinners_which",
+      "type": "multi",
+      "label": "Which medicine? (tap all that apply)",
+      "options": [
+        { "value": "warfarin", "label": "Warfarin" },
+        { "value": "apixaban", "label": "Apixaban (Eliquis)" },
+        { "value": "rivaroxaban", "label": "Rivaroxaban (Xarelto)" },
+        { "value": "dabigatran", "label": "Dabigatran (Pradaxa)" },
+        { "value": "clopidogrel", "label": "Clopidogrel (Plavix)" },
+        { "value": "aspirin", "label": "Aspirin" },
+        { "value": "other", "label": "Other" },
+        { "value": "unsure", "label": "Not sure" }
+      ],
+      "next": { "when": { "other": "B5_blood_thinners_other" }, "default": "B5_lie_flat" }
+    },
+
+    "B5_blood_thinners_other": {
+      "id": "B5_blood_thinners_other",
       "type": "text",
-      "label": "Which medication?",
-      "input": { "placeholder": "e.g., apixaban (Eliquis)" },
+      "label": "Please type the name (optional)",
+      "input": { "placeholder": "e.g., edoxaban" },
       "next": "B5_lie_flat"
     },
+
     "B5_lie_flat": {
       "id": "B5_lie_flat",
       "type": "single",
-      "label": "Can you lie flat for 20–30 minutes?",
+      "label": "Can you lie flat comfortably for 20–30 minutes?",
       "input": { "style": "big" },
       "options": [
         { "value": "yes", "label": "Yes" },
@@ -496,10 +581,11 @@
       ],
       "next": { "when": { "no": "B5_lie_flat_followup", "unsure": "B5_lie_flat_followup" }, "default": "B5_ocular_dom" }
     },
+
     "B5_lie_flat_followup": {
       "id": "B5_lie_flat_followup",
       "type": "single",
-      "label": "Neck or back issues that prevent lying flat?",
+      "label": "Do neck or back issues prevent you from lying flat?",
       "input": { "style": "big" },
       "options": [
         { "value": "yes", "label": "Yes" },
@@ -508,6 +594,7 @@
       ],
       "next": "B5_ocular_dom"
     },
+
     "B5_ocular_dom": {
       "id": "B5_ocular_dom",
       "type": "ocular_dominance",
@@ -515,13 +602,33 @@
       "help": "Use the finger-circle method or try the webcam helper.",
       "next": "E1_history"
     },
+
     "C_main_concern": {
       "id": "C_main_concern",
+      "type": "single",
+      "label": "What best describes your main concern?",
+      "input": { "style": "big" },
+      "options": [
+        { "value": "blur", "label": "Vision blur" },
+        { "value": "distortion", "label": "Distortion / wavy lines" },
+        { "value": "floaters", "label": "Spots / floaters" },
+        { "value": "flashes", "label": "Flashes of light" },
+        { "value": "pain", "label": "Pain / redness" },
+        { "value": "dry", "label": "Dry / gritty" },
+        { "value": "double", "label": "Double vision" },
+        { "value": "other", "label": "Other" }
+      ],
+      "next": { "when": { "other": "C_main_concern_other" }, "default": "C_symptoms" }
+    },
+
+    "C_main_concern_other": {
+      "id": "C_main_concern_other",
       "type": "text",
-      "label": "Describe your main concern",
-      "input": { "placeholder": "Free text" },
+      "label": "Please type your main concern",
+      "input": { "placeholder": "Optional" },
       "next": "C_symptoms"
     },
+
     "C_symptoms": {
       "id": "C_symptoms",
       "type": "multi",
@@ -538,6 +645,7 @@
       ],
       "next": "C_prev_treatments"
     },
+
     "C_prev_treatments": {
       "id": "C_prev_treatments",
       "type": "multi",
@@ -551,6 +659,7 @@
       ],
       "next": "C_details"
     },
+
     "C_details": {
       "id": "C_details",
       "type": "text",
@@ -558,12 +667,33 @@
       "input": { "placeholder": "Optional" },
       "next": "E1_history"
     },
+
     "D_main_symptom": {
       "id": "D_main_symptom",
-      "type": "text",
+      "type": "single",
       "label": "Main symptom",
+      "input": { "style": "big" },
+      "options": [
+        { "value": "blur", "label": "Vision blurry" },
+        { "value": "glare", "label": "Glare / halos" },
+        { "value": "floaters", "label": "Floaters / spots" },
+        { "value": "flashes", "label": "Flashes of light" },
+        { "value": "pain", "label": "Pain / redness" },
+        { "value": "dry", "label": "Dry / gritty" },
+        { "value": "double", "label": "Double vision" },
+        { "value": "other", "label": "Other" }
+      ],
+      "next": { "when": { "other": "D_main_symptom_other" }, "default": "D_duration" }
+    },
+
+    "D_main_symptom_other": {
+      "id": "D_main_symptom_other",
+      "type": "text",
+      "label": "Please type your main symptom",
+      "input": { "placeholder": "Optional" },
       "next": "D_duration"
     },
+
     "D_duration": {
       "id": "D_duration",
       "type": "single",
@@ -578,6 +708,7 @@
       ],
       "next": "D_tasks"
     },
+
     "D_tasks": {
       "id": "D_tasks",
       "type": "multi",
@@ -592,6 +723,7 @@
       ],
       "next": "D_prev_eye"
     },
+
     "D_prev_eye": {
       "id": "D_prev_eye",
       "type": "multi",
@@ -605,6 +737,7 @@
       ],
       "next": "D_glasses"
     },
+
     "D_glasses": {
       "id": "D_glasses",
       "type": "single",
@@ -619,6 +752,7 @@
       ],
       "next": "D_contacts"
     },
+
     "D_contacts": {
       "id": "D_contacts",
       "type": "single",
@@ -632,30 +766,54 @@
       ],
       "next": "E1_history"
     },
+
     "E1_history": {
       "id": "E1_history",
       "type": "multi",
-      "label": "Past eye conditions (tap all)",
+      "label": "Have you had any of these eye conditions? (tap all)",
       "options": [
         { "value": "cataract", "label": "Cataract" },
         { "value": "glaucoma", "label": "Glaucoma" },
         { "value": "amd", "label": "Macular degeneration" },
         { "value": "diabetic", "label": "Diabetic eye disease" },
         { "value": "uveitis", "label": "Uveitis" },
-        { "value": "amblyopia", "label": "Amblyopia/lazy eye" },
+        { "value": "amblyopia", "label": "Amblyopia / lazy eye" },
         { "value": "injury", "label": "Injury" },
         { "value": "other", "label": "Other" },
         { "value": "none", "label": "None" }
       ],
       "next": "E1_prev_surgery"
     },
+
     "E1_prev_surgery": {
       "id": "E1_prev_surgery",
+      "type": "multi",
+      "label": "Previous eye surgeries or lasers (tap all)",
+      "options": [
+        { "value": "cataract", "label": "Cataract surgery" },
+        { "value": "yag", "label": "YAG laser after cataract surgery" },
+        { "value": "lasik_prk", "label": "Refractive laser (LASIK/PRK/SMILE)" },
+        { "value": "pterygium", "label": "Pterygium removal" },
+        { "value": "trab", "label": "Trabeculectomy" },
+        { "value": "tube_migs", "label": "Tube / MIGS" },
+        { "value": "vitrectomy", "label": "Vitrectomy" },
+        { "value": "retinal_laser", "label": "Retinal laser" },
+        { "value": "corneal_tx", "label": "Corneal transplant" },
+        { "value": "other", "label": "Other" },
+        { "value": "none", "label": "None" },
+        { "value": "unsure", "label": "Not sure" }
+      ],
+      "next": { "when": { "other": "E1_prev_surgery_other" }, "default": "E1_refractive_glasses" }
+    },
+
+    "E1_prev_surgery_other": {
+      "id": "E1_prev_surgery_other",
       "type": "text",
-      "label": "Previous eye surgeries/lasers (brief)",
-      "input": { "placeholder": "e.g., cataract left 2021; SLT right 2022" },
+      "label": "Please type the name of the surgery/laser (optional)",
+      "input": { "placeholder": "Optional" },
       "next": "E1_refractive_glasses"
     },
+
     "E1_refractive_glasses": {
       "id": "E1_refractive_glasses",
       "type": "single",
@@ -670,6 +828,7 @@
       ],
       "next": "E1_contacts"
     },
+
     "E1_contacts": {
       "id": "E1_contacts",
       "type": "single",
@@ -683,26 +842,28 @@
       ],
       "next": "E2_medical"
     },
+
     "E2_medical": {
       "id": "E2_medical",
       "type": "multi",
-      "label": "Medical conditions (tap all)",
+      "label": "Do you have any of these medical conditions? (tap all)",
       "options": [
         { "value": "diabetes", "label": "Diabetes" },
         { "value": "hypertension", "label": "High blood pressure" },
         { "value": "heart", "label": "Heart disease" },
         { "value": "afib", "label": "Atrial fibrillation" },
-        { "value": "stroke_tia", "label": "Stroke/TIA" },
-        { "value": "thyroid", "label": "Thyroid" },
+        { "value": "stroke_tia", "label": "Stroke / TIA" },
+        { "value": "thyroid", "label": "Thyroid problems" },
         { "value": "lung", "label": "Lung disease (asthma/COPD)" },
         { "value": "sleep_apnoea", "label": "Sleep apnoea (CPAP?)" },
         { "value": "kidney", "label": "Kidney disease" },
-        { "value": "autoimmune", "label": "Autoimmune/arthritis" },
+        { "value": "autoimmune", "label": "Autoimmune / arthritis" },
         { "value": "none", "label": "None" },
         { "value": "other", "label": "Other" }
       ],
       "next": "E2_diabetes_details"
     },
+
     "E2_diabetes_details": {
       "id": "E2_diabetes_details",
       "type": "text",
@@ -710,10 +871,12 @@
       "input": { "placeholder": "Optional" },
       "next": "E2_steroids"
     },
+
     "E2_steroids": {
       "id": "E2_steroids",
       "type": "single",
-      "label": "Long-term steroid use?",
+      "label": "Do you use steroids long-term?",
+      "help": "Includes pills, inhalers, creams or eye drops.",
       "input": { "style": "big" },
       "options": [
         { "value": "no", "label": "No" },
@@ -725,6 +888,7 @@
       ],
       "next": { "when": { "pills": "E2_steroids_details", "inhalers": "E2_steroids_details", "creams": "E2_steroids_details", "eye_drops": "E2_steroids_details" }, "default": "E2_mobility" }
     },
+
     "E2_steroids_details": {
       "id": "E2_steroids_details",
       "type": "text",
@@ -732,6 +896,7 @@
       "input": { "placeholder": "e.g., Prednisone 5mg for 2 years" },
       "next": "E2_mobility"
     },
+
     "E2_mobility": {
       "id": "E2_mobility",
       "type": "single",
@@ -744,19 +909,21 @@
       ],
       "next": "E3_meds_quick"
     },
+
     "E3_meds_quick": {
       "id": "E3_meds_quick",
       "type": "multi",
-      "label": "Quick picks (common medications)",
+      "label": "Common medicines (quick picks)",
       "options": [
         { "value": "bp", "label": "Blood pressure" },
         { "value": "diabetes", "label": "Diabetes" },
         { "value": "thinners", "label": "Blood thinners" },
         { "value": "thyroid", "label": "Thyroid" },
-        { "value": "prostate", "label": "Prostate/urinary" }
+        { "value": "prostate", "label": "Prostate / urinary" }
       ],
       "next": "E3_meds_free"
     },
+
     "E3_meds_free": {
       "id": "E3_meds_free",
       "type": "text",
@@ -764,23 +931,44 @@
       "input": { "placeholder": "Add anything not covered above" },
       "next": "E3_allergies"
     },
+
     "E3_allergies": {
       "id": "E3_allergies",
       "type": "single",
-      "label": "Allergies?",
+      "label": "Do you have any allergies?",
       "input": { "style": "big" },
       "options": [
         { "value": "none", "label": "None" },
-        { "value": "yes", "label": "Yes (list)" }
+        { "value": "yes", "label": "Yes (select)" }
       ],
       "next": { "when": { "yes": "E3_allergies_list" }, "default": "E4_family_glaucoma" }
     },
+
     "E3_allergies_list": {
       "id": "E3_allergies_list",
+      "type": "multi",
+      "label": "Allergies (tap all that apply)",
+      "options": [
+        { "value": "penicillin", "label": "Penicillins" },
+        { "value": "sulfa", "label": "Sulfa drugs" },
+        { "value": "iodine", "label": "Iodine / contrast" },
+        { "value": "latex", "label": "Latex" },
+        { "value": "chlorhexidine", "label": "Chlorhexidine" },
+        { "value": "anaesthetic_drops", "label": "Anaesthetic eye drops" },
+        { "value": "other", "label": "Other" },
+        { "value": "unsure", "label": "Not sure" }
+      ],
+      "next": { "when": { "other": "E3_allergies_other" }, "default": "E4_family_glaucoma" }
+    },
+
+    "E3_allergies_other": {
+      "id": "E3_allergies_other",
       "type": "text",
-      "label": "List allergies (e.g., medications, latex; add iodine if clinic prefers)",
+      "label": "Please type the allergy (optional)",
+      "input": { "placeholder": "Optional" },
       "next": "E4_family_glaucoma"
     },
+
     "E4_family_glaucoma": {
       "id": "E4_family_glaucoma",
       "type": "single",
@@ -793,13 +981,28 @@
       ],
       "next": { "when": { "yes": "E4_family_glaucoma_who" }, "default": "E4_family_other" }
     },
+
     "E4_family_glaucoma_who": {
       "id": "E4_family_glaucoma_who",
+      "type": "multi",
+      "label": "Who has glaucoma? (tap all)",
+      "options": [
+        { "value": "parent", "label": "Parent" },
+        { "value": "sibling", "label": "Sibling" },
+        { "value": "child", "label": "Child" },
+        { "value": "other", "label": "Other relative" }
+      ],
+      "next": { "when": { "other": "E4_family_glaucoma_other" }, "default": "E4_family_other" }
+    },
+
+    "E4_family_glaucoma_other": {
+      "id": "E4_family_glaucoma_other",
       "type": "text",
-      "label": "Who?",
-      "input": { "placeholder": "e.g., Mother, brother" },
+      "label": "Please specify the relative (optional)",
+      "input": { "placeholder": "e.g., Grandparent, Aunt/Uncle" },
       "next": "E4_family_other"
     },
+
     "E4_family_other": {
       "id": "E4_family_other",
       "type": "multi",
@@ -813,30 +1016,75 @@
       ],
       "next": "E4_family_other_who"
     },
+
     "E4_family_other_who": {
       "id": "E4_family_other_who",
+      "type": "multi",
+      "label": "Who in the family? (tap all that apply)",
+      "options": [
+        { "value": "parent", "label": "Parent" },
+        { "value": "sibling", "label": "Sibling" },
+        { "value": "child", "label": "Child" },
+        { "value": "other", "label": "Other relative" },
+        { "value": "prefer_not", "label": "Prefer not to say" }
+      ],
+      "next": { "when": { "other": "E4_family_other_who_text" }, "default": "E5_support" }
+    },
+
+    "E4_family_other_who_text": {
+      "id": "E4_family_other_who_text",
       "type": "text",
-      "label": "Who? (if any)",
-      "input": { "placeholder": "e.g., Father, sister" },
+      "label": "Please specify the relative (optional)",
+      "input": { "placeholder": "e.g., Grandparent, Aunt/Uncle" },
       "next": "E5_support"
     },
+
     "E5_support": {
       "id": "E5_support",
       "type": "single",
-      "label": "Interpreter or support person needed?",
+      "label": "Do you need an interpreter or a support person?",
       "input": { "style": "big" },
       "options": [
-        { "value": "yes", "label": "Yes (language)" },
+        { "value": "yes", "label": "Yes (tell us the language)" },
         { "value": "no", "label": "No" }
       ],
       "next": { "when": { "yes": "E5_language" }, "default": "E5_anything_else" }
     },
+
     "E5_language": {
       "id": "E5_language",
-      "type": "text",
+      "type": "single",
       "label": "Language",
+      "input": { "style": "big" },
+      "options": [
+        { "value": "english", "label": "English" },
+        { "value": "mandarin", "label": "Mandarin" },
+        { "value": "cantonese", "label": "Cantonese" },
+        { "value": "arabic", "label": "Arabic" },
+        { "value": "vietnamese", "label": "Vietnamese" },
+        { "value": "italian", "label": "Italian" },
+        { "value": "greek", "label": "Greek" },
+        { "value": "hindi", "label": "Hindi" },
+        { "value": "punjabi", "label": "Punjabi" },
+        { "value": "spanish", "label": "Spanish" },
+        { "value": "tagalog", "label": "Filipino / Tagalog" },
+        { "value": "korean", "label": "Korean" },
+        { "value": "turkish", "label": "Turkish" },
+        { "value": "thai", "label": "Thai" },
+        { "value": "french", "label": "French" },
+        { "value": "german", "label": "German" },
+        { "value": "other", "label": "Other" }
+      ],
+      "next": { "when": { "other": "E5_language_other" }, "default": "E5_anything_else" }
+    },
+
+    "E5_language_other": {
+      "id": "E5_language_other",
+      "type": "text",
+      "label": "Please type the language",
       "next": "E5_anything_else"
     },
+
     "E5_anything_else": {
       "id": "E5_anything_else",
       "type": "text",
@@ -844,7 +1092,7 @@
       "input": { "placeholder": "Optional" },
       "next": "review"
     },
+
     "review": { "id": "review", "type": "review" }
   }
 }
-
