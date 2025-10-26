@@ -195,6 +195,45 @@ input[type="range"]{
 /* ---- Footer ---- */
 .site-footer{ text-align:center; color:var(--muted); padding: 18px 0 60px }
 
+/* ---- Centering overrides (questions + inputs) ---- */
+.question{ display:grid; justify-items:center; }
+.question h2, .help{ text-align:center; }
+
+/* Center option groups */
+.options{ align-items:center; }
+.options.single{ justify-content:center; }
+@media (min-width:720px){ .options.multi{ place-content:center; } }
+
+/* Constrain and center text inputs/areas */
+input[type="text"], input[type="number"], textarea{
+  width: min(100%, 680px);
+  margin-inline: auto;
+}
+
+/* Constrain and center the mic row + sliders */
+.text-row{ justify-content:center; grid-template-columns: minmax(0, 680px) auto; }
+.slider-wrap{ max-width:680px; margin:0 auto; }
+
+/* Single-choice layout & sizing via ARIA role (works even if .single class missing) */
+[role="radiogroup"]{
+  display:flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--tile-gap);
+  align-items: flex-start;
+}
+[role="radiogroup"] .option{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:auto !important;
+  max-width:100%;
+  min-width:120px;
+  padding-inline: calc(var(--tile-pad) * 1.25);
+  text-align:center;
+  flex: 0 0 auto;
+}
+
 /* ---- Motion respect ---- */
 @media (prefers-reduced-motion: reduce){
   *{transition:none !important}
