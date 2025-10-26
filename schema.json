@@ -20,8 +20,7 @@
       "type": "single",
       "required": true,
       "label": "In the last 7 days, have you had any of the following?",
-      "help": "• Sudden loss of vision
-• Severe eye pain/redness",
+      "help": "• Sudden loss of vision\n• Severe eye pain/redness",
       "input": { "style": "big" },
       "options": [
         { "value": "yes", "label": "Yes" },
