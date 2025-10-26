@@ -856,13 +856,30 @@
         { "value": "none", "label": "None" },
         { "value": "other", "label": "Other" }
       ],
+      "next": { "when": { "diabetes": "E2_diabetes_year" }, "default": "E2_steroids" }
+    },
+    "E2_diabetes_year": {
+      "id": "E2_diabetes_year",
+      "type": "slider",
+      "label": "What year were you diagnosed with diabetes?",
+      "help": "Use the slider or type the year.",
+      "input": { "min": 1960, "max": 2025, "step": 1, "showValue": true },
+      "next": "E2_hba1c"
+    },
+
+    "E2_hba1c": {
+      "id": "E2_hba1c",
+      "type": "slider",
+      "label": "What was your last HbA1c (%)?",
+      "help": "Use the slider or type the value (e.g., 7.2).",
+      "input": { "min": 4, "max": 14, "step": 0.1, "showValue": true },
       "next": "E2_diabetes_details"
     },
 
     "E2_diabetes_details": {
       "id": "E2_diabetes_details",
       "type": "text",
-      "label": "If you selected Diabetes: year of diagnosis and last HbA1c (if known)",
+      "label": "If you selected Diabetes: any extra details (optional)",
       "input": { "placeholder": "Optional" },
       "next": "E2_steroids"
     },
