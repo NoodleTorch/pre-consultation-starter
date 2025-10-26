@@ -99,7 +99,9 @@ main{max-width: 840px; margin: 0 auto 80px;}
 }
 /* Single-choice: lay tiles side-by-side and size to content */
 .options.single{
-  display: flex;
+  display:flex;
+  flex-direction: row;      /* override base column */
+  align-items: flex-start;  /* prevent cross‑axis stretch to 100% */
   flex-wrap: wrap;
   gap: var(--tile-gap);
 }
@@ -109,10 +111,11 @@ main{max-width: 840px; margin: 0 auto 80px;}
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: auto;                  /* fit to text */
-  min-width: 120px;             /* still a big tap target */
+  flex: 0 0 auto;            /* don't grow to fill line */
+  width: auto !important;    /* fit to text */
+  min-width: 120px;          /* big tap target */
   padding-inline: calc(var(--tile-pad) * 1.25);
-  text-align: center;           /* centered label looks better on small tiles */
+  text-align: center;        /* tidy label */
 }
 
 /* Keep multi-select filling columns */
