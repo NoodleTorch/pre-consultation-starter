@@ -5,12 +5,11 @@
     "consent": {
       "id": "consent",
       "type": "single",
-      "label": "Do you consent to completing a short pre-consultation questionnaire? Your answers will be reviewed by the clinic team.",
-      "help": "You can stop anytime. Your answers are kept on this device until you choose to submit.",
-      "required": true,
+      "label": "Before we begin — please read and acknowledge",
+      "help": "Do you consent to completing a short pre‑consultation questionnaire? Your answers will be reviewed by the clinic team. You can stop anytime. Your answers are kept on this device until you choose to submit.",
       "input": { "style": "big" },
       "options": [
-        { "value": "ok", "label": "Yes, I consent — continue" }
+        { "value": "ok", "label": "I agree — continue" }
       ],
       "next": "safety_screen"
     },
