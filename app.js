@@ -288,6 +288,7 @@
 
   function renderText(q) {
     const wrap = document.createElement('div');
+    wrap.className = 'text-row';
     const isReadonly = q.input && q.input.readonly;
     const isArea = q.input && q.input.textarea;
 
@@ -306,6 +307,22 @@
       ctrl.setAttribute('readonly', 'readonly');
     }
     wrap.appendChild(ctrl);
+
+    // Mic button
+    const micBtn = document.createElement('button');
+    micBtn.type = 'button';
+    micBtn.className = 'btn mic-btn';
+    micBtn.setAttribute('aria-label', 'Start dictation');
+    micBtn.textContent = '🎤';
+    wrap.appendChild(micBtn);
+
+    if (isReadonly) {
+      micBtn.classList.add('hidden');
+      micBtn.disabled = true;
+    } else {
+      attachDictation(ctrl, micBtn);
+    }
+
     return wrap;
   }
 
@@ -505,6 +522,36 @@
   function clearError(id) {
     const e = document.getElementById('error_' + id);
     if (e) { e.textContent = ''; e.style.display = 'none'; }
+  }
+
+  // --- Dictation helper ---
+  function attachDictation(inputEl, buttonEl) {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { buttonEl.classList.add('hidden'); buttonEl.disabled = true; return; }
+
+    let rec = null;
+    let active = false;
+
+    buttonEl.addEventListener('click', () => {
+      if (active && rec) { rec.stop(); return; }
+
+      rec = new SR();
+      rec.lang = 'en-AU';
+      rec.interimResults = true;
+      rec.continuous = false;
+
+      rec.onstart = () => { active = true; buttonEl.classList.add('recording'); buttonEl.textContent = '🎙️'; };
+      rec.onerror = () => { active = false; buttonEl.classList.remove('recording'); buttonEl.textContent = '🎤'; };
+      rec.onend   = () => { active = false; buttonEl.classList.remove('recording'); buttonEl.textContent = '🎤'; };
+
+      rec.onresult = (e) => {
+        let text = '';
+        for (const r of e.results) text += r[0].transcript;
+        inputEl.value = text;
+      };
+
+      rec.start();
+    });
   }
 
   function clamp(v, min, max) { return Math.max(min, Math.min(max, isNaN(v) ? min : v)); }
