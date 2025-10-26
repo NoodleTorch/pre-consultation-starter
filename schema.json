@@ -408,10 +408,7 @@
       "required": false,
       "label": "Lens options (quick neutral overview)",
       "input": { "textarea": true, "readonly": true },
-      "preset": "Monofocal: clearest at one distance; reading glasses are common after surgery.
-Toric (astigmatism-correcting): may reduce glasses at the chosen distance.
-Multifocal/EDOF: may reduce glasses for more distances but can cause halos/glare and aren’t for everyone.
-No lens is perfect. Your surgeon will advise what suits your eyes and lifestyle.",
+      "preset": "Monofocal: clearest at one distance; reading glasses are common after surgery.\nToric (astigmatism-correcting): may reduce glasses at the chosen distance.\nMultifocal/EDOF: may reduce glasses for more distances but can cause halos/glare and aren’t for everyone.\nNo lens is perfect. Your surgeon will advise what suits your eyes and lifestyle.",
       "next": "B4_pref_goal"
     },
 
