@@ -596,14 +596,7 @@
       "label": "Ocular dominance (optional quick check)",
       "help": "Use the finger-circle method or try the webcam helper.",
       "next": "E1_history"
-    },
-
-    "C_main_concern": {
-      "id": "C_main_concern",
-      "type": "single",
-      "label": "What best describes your main concern?",
-      "input": { "style": "big" },
-      "options": [
+    },      "options": [
         { "value": "blur", "label": "Vision blur" },
         { "value": "distortion", "label": "Distortion / wavy lines" },
         { "value": "floaters", "label": "Spots / floaters" },
@@ -614,23 +607,8 @@
         { "value": "other", "label": "Other" }
       ],
       "next": { "when": { "other": "C_main_concern_other" }, "default": "C_symptoms" }
-    },
-
-    "C_main_concern_other": {
-      "id": "C_main_concern_other",
-      "type": "text",
-      "label": "Please type your main concern",
-      "input": { "placeholder": "Optional" },
-      "next": "C_symptoms"
-    },
-
-    "C_symptoms": {
-      "id": "C_symptoms",
-      "type": "multi",
-      "label": "Symptoms (tap all)",
-      "options": [
-        { "value": "blur", "label": "Vision blur" },
-        { "value": "distortion", "label": "Distortion/wavy lines" },
+    },      "next": "C_symptoms"
+    },        { "value": "distortion", "label": "Distortion/wavy lines" },
         { "value": "floaters", "label": "Spots/floaters" },
         { "value": "flashes", "label": "Flashes" },
         { "value": "pain", "label": "Pain/redness" },
@@ -639,28 +617,13 @@
         { "value": "other", "label": "Other" }
       ],
       "next": "C_prev_treatments"
-    },
-
-    "C_prev_treatments": {
-      "id": "C_prev_treatments",
-      "type": "multi",
-      "label": "Previous treatments",
-      "options": [
-        { "value": "injections", "label": "Injections" },
-        { "value": "laser", "label": "Laser" },
+    },        { "value": "laser", "label": "Laser" },
         { "value": "surgery", "label": "Surgery" },
         { "value": "none", "label": "None" },
         { "value": "unsure", "label": "Not sure" }
       ],
       "next": "C_details"
-    },
-
-    "C_details": {
-      "id": "C_details",
-      "type": "text",
-      "label": "Add any details (eye/year if known)",
-      "input": { "placeholder": "Optional" },
-      "next": "E1_history"
+    },      "next": "E1_history"
     },
 
     "D_main_symptom": {
