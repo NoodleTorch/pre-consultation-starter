@@ -45,13 +45,13 @@
       "type": "single",
       "required": true,
       "label": "What is the main reason for your appointment?",
+      "help": "If you're here because of a new or worsening symptom, choose 'Other eye issue / new or worsening symptoms'.",
       "input": { "style": "big" },
       "options": [
         { "value": "glaucoma", "label": "Glaucoma / eye pressure check" },
         { "value": "cataract", "label": "Cataract assessment or symptoms" },
-        { "value": "other_issue", "label": "Other eye issue (type briefly)" },
-        { "value": "general_check", "label": "General eye check / second opinion" },
-        { "value": "unsure_symptoms", "label": "New or worsening symptoms (not sure what)" }
+        { "value": "other_issue", "label": "Other eye issue / new or worsening symptoms (type briefly)" },
+        { "value": "general_check", "label": "General eye check / second opinion" }
       ],
       "next": "age"
     },
@@ -139,8 +139,7 @@
           "glaucoma": "A3_symptoms",
           "cataract": "B3_symptoms",
           "other_issue": "D_main_symptom",
-          "general_check": "D_main_symptom",
-          "unsure_symptoms": "D_main_symptom"
+          "general_check": "D_main_symptom"
         },
         "default": "D_main_symptom"
       }
@@ -601,6 +600,7 @@
       "id": "D_main_symptom",
       "type": "single",
       "label": "Main symptom",
+      "help": "Pick the main symptom you've noticed. If nothing fits, choose 'Other' and type a brief note.",
       "input": { "style": "big" },
       "options": [
         { "value": "blur", "label": "Vision blurry" },
