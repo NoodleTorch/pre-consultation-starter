@@ -596,36 +596,7 @@
       "label": "Ocular dominance (optional quick check)",
       "help": "Use the finger-circle method or try the webcam helper.",
       "next": "E1_history"
-    },      "options": [
-        { "value": "blur", "label": "Vision blur" },
-        { "value": "distortion", "label": "Distortion / wavy lines" },
-        { "value": "floaters", "label": "Spots / floaters" },
-        { "value": "flashes", "label": "Flashes of light" },
-        { "value": "pain", "label": "Pain / redness" },
-        { "value": "dry", "label": "Dry / gritty" },
-        { "value": "double", "label": "Double vision" },
-        { "value": "other", "label": "Other" }
-      ],
-      "next": { "when": { "other": "C_main_concern_other" }, "default": "C_symptoms" }
-    },      "next": "C_symptoms"
-    },        { "value": "distortion", "label": "Distortion/wavy lines" },
-        { "value": "floaters", "label": "Spots/floaters" },
-        { "value": "flashes", "label": "Flashes" },
-        { "value": "pain", "label": "Pain/redness" },
-        { "value": "dry", "label": "Dry/gritty" },
-        { "value": "double", "label": "Double vision" },
-        { "value": "other", "label": "Other" }
-      ],
-      "next": "C_prev_treatments"
-    },        { "value": "laser", "label": "Laser" },
-        { "value": "surgery", "label": "Surgery" },
-        { "value": "none", "label": "None" },
-        { "value": "unsure", "label": "Not sure" }
-      ],
-      "next": "C_details"
-    },      "next": "E1_history"
-    },
-
+    },      
     "D_main_symptom": {
       "id": "D_main_symptom",
       "type": "single",
