@@ -234,6 +234,24 @@ input[type="text"], input[type="number"], textarea{
   flex: 0 0 auto;
 }
 
+/* Drop tiles with images */
+.options .option .opt-img{
+  display:block;
+  width:120px;
+  height:80px;
+  object-fit:contain;
+  margin: 0 auto .5rem; /* center image in tile */
+  border-radius:8px;
+  border:1px solid var(--tile-border);
+  background: var(--tile-bg);
+}
+/* Center label only when an image is present */
+.options .option .opt-img + .option-label{
+  display:block;
+  text-align:center;
+  line-height:1.2;
+}
+
 /* ---- Motion respect ---- */
 @media (prefers-reduced-motion: reduce){
   *{transition:none !important}
