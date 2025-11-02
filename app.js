@@ -311,30 +311,37 @@
     function renderSlider(q) {
       const wrap = document.createElement('div');
       wrap.className = 'slider-wrap';
-  
-      const cfg = Object.assign({ min: 0, max: 100, step: 1 }, q.input || {});
-  
+
+      const cfg = Object.assign({ min: 0, max: 100, step: 1 }, (q.input || {}));
+
       const range = document.createElement('input');
       range.type = 'range';
       range.min = cfg.min; range.max = cfg.max; range.step = cfg.step;
       range.setAttribute('aria-label', 'value');
-  
+
       const number = document.createElement('input');
       number.type = 'number';
       number.min = cfg.min; number.max = cfg.max; number.step = cfg.step;
       number.className = 'number-input';
-  
+      number.inputMode = 'decimal';
+
       const initial = app.answers[q.id] ?? cfg.min;
       range.value = initial; number.value = initial;
-  
+
+      const sync = (v) => {
+        let n = parseFloat(v);
+        if (Number.isNaN(n)) n = cfg.min;
+        n = Math.max(cfg.min, Math.min(cfg.max, n));
+        const s = String(n);
+        range.value = s; number.value = s;
+      };
+
       range.addEventListener('input', () => { number.value = range.value; });
-      number.addEventListener('input', () => {
-        const v = clamp(parseInt(number.value, 10), cfg.min, cfg.max);
-        number.value = v; range.value = v;
-      });
-  
+      number.addEventListener('input', () => { sync(number.value); });
+
       wrap.appendChild(range);
-      if (cfg.showValue) wrap.appendChild(number);
+      // Always show numeric fallback beside slider
+      wrap.appendChild(number);
       return wrap;
     }
   
@@ -441,10 +448,9 @@
       // Range + numeric fallback
       if (q.type === 'slider') {
         const range = el.qwrap.querySelector('input[type=range]');
-        const number = el.qwrap.querySelector('input[type=number]');
-        if (range) range.value = val;
-        if (number) number.value = val;
-        return;
+        if (!range) return null;
+        const v = parseFloat(range.value);
+        return Number.isNaN(v) ? null : v;
       }
 
       // Text
