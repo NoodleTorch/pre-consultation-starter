@@ -8,6 +8,14 @@
   (function () {
     const SCHEMA_URL = 'schema.json';
     const STORE_KEY = 'preconsult_answers_v1';
+
+    // Placeholder image (generic) for options like A5_drops when no brand image provided
+    const PLACEHOLDER_SVG = `<svg xmlns='http://www.w3.org/2000/svg' width='160' height='110' viewBox='0 0 160 110'>
+      <rect width='100%' height='100%' fill='#eeeeee'/>
+      <rect x='20' y='20' width='120' height='70' fill='none' stroke='#bbbbbb' stroke-width='2'/>
+      <text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='12' fill='#888888'>insert image here</text>
+    </svg>`;
+    const PLACEHOLDER_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(PLACEHOLDER_SVG);
   
     // DOM refs
     const el = {
@@ -221,9 +229,25 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'option';
-        btn.textContent = opt.label;
         btn.setAttribute('data-value', opt.value);
         if (current === opt.value) btn.classList.add('selected');
+  
+        // If this is the drops list (A5_drops), show an image per option
+        if (q.id === 'A5_drops') {
+          const img = document.createElement('img');
+          img.className = 'opt-img';
+          img.alt = (opt.label || 'Drop') + ' image';
+          img.src = opt.img || PLACEHOLDER_IMG; // use provided image or the generic placeholder
+          btn.appendChild(img);
+          const span = document.createElement('span');
+          span.className = 'option-label';
+          span.textContent = opt.label;
+          btn.appendChild(span);
+        } else {
+          // Default text-only button
+          btn.textContent = opt.label;
+        }
+  
         btn.addEventListener('click', () => {
           // deselect others
           box.querySelectorAll('.option').forEach(b => b.classList.remove('selected'));
@@ -244,9 +268,23 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'option';
-        btn.textContent = opt.label;
         btn.setAttribute('data-value', opt.value);
         if (current.includes(opt.value)) btn.classList.add('selected');
+  
+        // Image support for drops list
+        if (q.id === 'A5_drops') {
+          const img = document.createElement('img');
+          img.className = 'opt-img';
+          img.alt = (opt.label || 'Drop') + ' image';
+          img.src = opt.img || PLACEHOLDER_IMG;
+          btn.appendChild(img);
+          const span = document.createElement('span');
+          span.className = 'option-label';
+          span.textContent = opt.label;
+          btn.appendChild(span);
+        } else {
+          btn.textContent = opt.label;
+        }
   
         btn.addEventListener('click', () => {
           const NONE = 'none';
