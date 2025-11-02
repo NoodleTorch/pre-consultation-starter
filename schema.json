@@ -650,53 +650,8 @@
         { "value": "hobbies", "label": "Hobbies" },
         { "value": "stairs", "label": "Stairs" }
       ],
-      "next": "D_prev_eye"
-    },
-
-    "D_prev_eye": {
-      "id": "D_prev_eye",
-      "type": "multi",
-      "label": "Previous eye conditions or surgery",
-      "options": [
-        { "value": "cataract", "label": "Cataract" },
-        { "value": "glaucoma", "label": "Glaucoma" },
-        { "value": "amd", "label": "Macular degeneration" },
-        { "value": "diabetic", "label": "Diabetic eye disease" },
-        { "value": "surgery", "label": "Previous eye surgery" }
-      ],
-      "next": "D_glasses"
-    },
-
-    "D_glasses": {
-      "id": "D_glasses",
-      "type": "single",
-      "label": "Do you use glasses?",
-      "input": { "style": "big" },
-      "options": [
-        { "value": "distance", "label": "Distance only" },
-        { "value": "near", "label": "Near only" },
-        { "value": "bifocal", "label": "Bifocal" },
-        { "value": "progressive", "label": "Progressive/multifocal" },
-        { "value": "none", "label": "None" }
-      ],
-      "next": "D_contacts"
-    },
-
-    "D_contacts": {
-      "id": "D_contacts",
-      "type": "single",
-      "label": "Contact lenses?",
-      "input": { "style": "big" },
-      "options": [
-        { "value": "none", "label": "None" },
-        { "value": "soft_daily", "label": "Soft daily" },
-        { "value": "soft_monthly", "label": "Soft monthly" },
-        { "value": "rgp", "label": "Rigid (RGP)" }
-      ],
       "next": "E1_history"
-    },
-
-    "E1_history": {
+    },    "E1_history": {
       "id": "E1_history",
       "type": "multi",
       "label": "Have you had any of these eye conditions? (tap all)",
