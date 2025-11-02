@@ -252,6 +252,10 @@ input[type="text"], input[type="number"], textarea{
   line-height:1.2;
 }
 
+/* Slider + number layout (override) */
+.slider-wrap{ display:flex; align-items:center; gap:.5rem; /* tighten spacing to fit beside slider */ }
+.number-input{ width:7ch; padding:.4rem .5rem; font-size:1.1rem; }
+
 /* ---- Motion respect ---- */
 @media (prefers-reduced-motion: reduce){
   *{transition:none !important}
