@@ -175,7 +175,126 @@
     function renderError(msg) {
       el.qwrap.innerHTML = `<div class="notice error">${escapeHtml(msg)}</div>`;
     }
-  
+
+    // --- Option tile renderers ---
+    function renderSingle(q) {
+      const wrap = document.createElement('div');
+      wrap.className = 'options single';
+      const opts = Array.isArray(q.options) ? q.options : [];
+      opts.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'option';
+        btn.setAttribute('aria-pressed', 'false');
+        btn.dataset.value = String(opt.value ?? opt);
+
+        // optional image
+        if (opt.img || q.showImages) {
+          const img = document.createElement('img');
+          img.className = 'option-img';
+          img.alt = opt.label ? String(opt.label) : '';
+          img.src = opt.img || PLACEHOLDER_IMG;
+          btn.appendChild(img);
+        }
+        const label = document.createElement('div');
+        label.className = 'option-label';
+        label.textContent = String(opt.label ?? opt);
+        btn.appendChild(label);
+
+        btn.addEventListener('click', () => {
+          wrap.querySelectorAll('.option').forEach(x => { x.classList.remove('selected'); x.setAttribute('aria-pressed','false'); });
+          btn.classList.add('selected');
+          btn.setAttribute('aria-pressed','true');
+        });
+        wrap.appendChild(btn);
+      });
+      return wrap;
+    }
+
+    function renderMulti(q) {
+      const wrap = document.createElement('div');
+      wrap.className = 'options multi';
+      const opts = Array.isArray(q.options) ? q.options : [];
+      const hasNone = opts.some(o => (o.value ?? o) === 'none');
+
+      opts.forEach(opt => {
+        const value = String(opt.value ?? opt);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'option';
+        btn.setAttribute('aria-pressed', 'false');
+        btn.dataset.value = value;
+
+        if (opt.img || q.showImages) {
+          const img = document.createElement('img');
+          img.className = 'option-img';
+          img.alt = opt.label ? String(opt.label) : '';
+          img.src = opt.img || PLACEHOLDER_IMG;
+          btn.appendChild(img);
+        }
+        const label = document.createElement('div');
+        label.className = 'option-label';
+        label.textContent = String(opt.label ?? opt);
+        btn.appendChild(label);
+
+        btn.addEventListener('click', () => {
+          const isNone = value === 'none';
+          if (isNone) {
+            // None is exclusive: clear others, select only none
+            wrap.querySelectorAll('.option').forEach(x => { x.classList.remove('selected'); x.setAttribute('aria-pressed','false'); });
+            btn.classList.add('selected');
+            btn.setAttribute('aria-pressed','true');
+          } else {
+            // Toggle this one
+            const nowSel = !btn.classList.contains('selected');
+            btn.classList.toggle('selected', nowSel);
+            btn.setAttribute('aria-pressed', nowSel ? 'true' : 'false');
+            // If any non-none selected, ensure none is cleared
+            if (hasNone) {
+              wrap.querySelector('.option[data-value="none"]')?.classList.remove('selected');
+              wrap.querySelector('.option[data-value="none"]')?.setAttribute('aria-pressed','false');
+            }
+          }
+        });
+        wrap.appendChild(btn);
+      });
+      return wrap;
+    }
+
+    function renderSlider(q) {
+      const wrap = document.createElement('div');
+      wrap.className = 'slider-row';
+
+      const min = q.input?.min ?? 0;
+      const max = q.input?.max ?? 100;
+      const step = q.input?.step ?? 1;
+      const value = (app.answers[q.id] != null) ? app.answers[q.id] : (q.input?.default ?? min);
+
+      const range = document.createElement('input');
+      range.type = 'range';
+      range.min = String(min);
+      range.max = String(max);
+      range.step = String(step);
+      range.value = String(value);
+
+      const number = document.createElement('input');
+      number.type = 'number';
+      number.min = String(min);
+      number.max = String(max);
+      number.step = String(step);
+      number.value = String(value);
+
+      range.addEventListener('input', () => { number.value = range.value; });
+      number.addEventListener('input', () => {
+        const v = Math.min(max, Math.max(min, parseFloat(number.value || '')));
+        if (!Number.isNaN(v)) range.value = String(v);
+      });
+
+      wrap.appendChild(range);
+      wrap.appendChild(number);
+      return wrap;
+    }
+
     function renderQuestion(q) {
       // Clear container
       el.qwrap.innerHTML = '';
