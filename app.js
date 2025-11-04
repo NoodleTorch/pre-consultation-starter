@@ -350,38 +350,35 @@
       wrap.className = 'text-row';
       const isReadonly = q.input && q.input.readonly;
       const isArea = q.input && q.input.textarea;
-  
+
+      // Optional preset/notice block
       if (q.preset) {
         const notice = document.createElement('div');
         notice.className = 'notice';
         notice.textContent = q.preset;
         wrap.appendChild(notice);
       }
-  
+
+      // For readonly info screens: do not render an input at all (removes empty white box)
+      if (isReadonly) {
+        return wrap;
+      }
+
+      // Editable text control (+ mic)
       const ctrl = document.createElement(isArea ? 'textarea' : 'input');
       if (!isArea) ctrl.type = 'text';
       ctrl.id = 'input_' + q.id;
       ctrl.placeholder = q.input && q.input.placeholder ? q.input.placeholder : '';
-      if (isReadonly) {
-        ctrl.setAttribute('readonly', 'readonly');
-      }
       wrap.appendChild(ctrl);
-  
-      // Mic button
+
       const micBtn = document.createElement('button');
       micBtn.type = 'button';
       micBtn.className = 'btn mic-btn';
       micBtn.setAttribute('aria-label', 'Start dictation');
       micBtn.textContent = '🎤';
       wrap.appendChild(micBtn);
-  
-      if (isReadonly) {
-        micBtn.classList.add('hidden');
-        micBtn.disabled = true;
-      } else {
-        attachDictation(ctrl, micBtn);
-      }
-  
+
+      attachDictation(ctrl, micBtn);
       return wrap;
     }
   
