@@ -402,13 +402,19 @@
     },
 
     "B4_info": {
-      "id": "B4_info",
-      "type": "text",
-      "required": false,
-      "label": "Lens options (quick neutral overview)",
-      "input": { "textarea": true, "readonly": true },
-      "preset": "Monofocal: clearest at one distance; reading glasses are common after surgery.\nToric (astigmatism-correcting): may reduce glasses at the chosen distance.\nMultifocal/EDOF: may reduce glasses for more distances but can cause halos/glare and aren’t for everyone.\nNo lens is perfect. Your surgeon will advise what suits your eyes and lifestyle.",
-      "next": "B4_pref_goal"
+      $1Monofocal — Clearest at one distance; reading glasses usually needed for the other distance.
+
+Enhanced Monofocal (EDOF‑lite) — Slightly extended depth of focus; fewer halos than full EDOF.
+
+EDOF — Improved range of focus; possible mild halos at night.
+
+Trifocal/Multifocal — Best near + distance without glasses; higher risk of halos/glare at night; not for everyone.
+
+Toric (astigmatism‑correcting) — Can reduce glasses at the chosen distance if you have astigmatism.
+
+[Visual simulation coming soon for each lens type]
+
+No lens is perfect. Your surgeon will advise what suits your eyes and lifestyle.$3: "B4_pref_goal"
     },
 
     "B4_pref_goal": {
@@ -590,10 +596,7 @@
     },
 
     "B5_ocular_dom": {
-      "id": "B5_ocular_dom",
-      "type": "ocular_dominance",
-      "label": "Ocular dominance (optional quick check)",
-      "help": "Use the finger-circle method or try the webcam helper.",
+      $1Which is your dominant eye? If you do not know, click the tool to determine.$2
       "next": "E1_history"
     },      
     "D_main_symptom": {
