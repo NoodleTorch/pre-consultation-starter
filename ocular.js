@@ -8,10 +8,12 @@ export function mountOcularDominance({ container, question, save }) {
   // --- UI scaffolding ---
   container.innerHTML = '';
 
+  if (!question || !question.help) {
   const help = document.createElement('p');
   help.className = 'help';
   help.textContent = 'Which is your dominant eye? If you do not know, please click on the tool to determine.';
   container.appendChild(help);
+}
 
   const controls = document.createElement('div');
   controls.style.display = 'flex';
