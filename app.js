@@ -386,15 +386,16 @@
     }
   
     function renderOcularDominance(q) {
-      // Webcam-assisted ocular dominance (beta)
-      // Approach: user aligns their finger-circle with the on-screen target; we find eye centers
-      // via Shape Detection API if available (FaceDetector) and decide which eye is closer.
+      // Webcam-assisted ocular dominance (beta, diagnostic)
+      // Detects the user's finger "aperture" (midpoint between thumb tip & index tip)
+      // and compares its position to left/right iris centers. The closer eye is inferred
+      // as dominant while the user looks through the hand circle toward the camera lens.
       const wrap = document.createElement('div');
       wrap.className = 'ocular-wrap';
 
       const info = document.createElement('div');
       info.className = 'help';
-      info.textContent = q.help || 'Beta camera tool: Make a small circle with thumb+index. Hold it at arm\'s length and line it up with the on‑screen target. Keep both eyes open and look through the circle.';
+      info.textContent = 'Which is your dominant eye? If you do not know, please click on the tool to determine.';
       wrap.appendChild(info);
 
       // Controls
@@ -407,6 +408,12 @@
       controls.append(startBtn, stopBtn, resultEl);
       wrap.appendChild(controls);
 
+      // Live instructions (explicitly say: use hand circle between face and camera)
+      const tips = document.createElement('div');
+      tips.className = 'notice';
+      tips.textContent = 'Hold a small circle made with your thumb and index finger about 30–50 cm in front of your face, BETWEEN your face and the camera (not the screen). Keep both eyes open and look through the circle at the camera lens. Hold steady for 1–2 seconds.';
+      wrap.appendChild(tips);
+
       // Video + overlay
       const stage = document.createElement('div');
       stage.style.position='relative'; stage.style.width='100%'; stage.style.maxWidth='560px'; stage.style.aspectRatio='4/3'; stage.style.border='2px solid var(--border)'; stage.style.borderRadius='12px'; stage.style.overflow='hidden'; stage.style.margin='10px 0';
@@ -416,72 +423,103 @@
       stage.append(video, overlay);
       wrap.appendChild(stage);
 
-      // Fallback manual selection (still rendered so Next works) — we will auto-select on detection
+      // Minimal choice row (kept for Next navigation; selection is auto-set on detection)
       const choices = document.createElement('div');
       choices.className = 'options single';
       ['left','right','unsure'].forEach(v=>{
         const b=document.createElement('button'); b.type='button'; b.className='option'; b.dataset.value=v; b.textContent = v==='unsure' ? 'Not sure' : (v.charAt(0).toUpperCase()+v.slice(1));
-        b.addEventListener('click', ()=>{ choices.querySelectorAll('.option').forEach(x=>x.classList.remove('selected')); b.classList.add('selected'); });
+        b.addEventListener('click', ()=>{ choices.querySelectorAll('.option').forEach(x=>x.classList.remove('selected')); b.classList.add('selected'); app.answers[q.id]=v; saveAnswers(); });
         choices.appendChild(b);
       });
       wrap.appendChild(choices);
 
       // Detection state
-      let stream=null, rafId=null, detector=null, lastWinner=null, stableCount=0;
+      let stream=null, rafId=null, face=null, hands=null, lastWinner=null, stableCount=0;
+      let faceLM=null, handLM=null; // latest landmarks
 
       function select(val){
         const btn = choices.querySelector(`.option[data-value="${val}"]`);
         if (btn) { choices.querySelectorAll('.option').forEach(x=>x.classList.remove('selected')); btn.classList.add('selected'); }
         resultEl.textContent = `Likely: ${val==='unsure'?'Undetermined':val.charAt(0).toUpperCase()+val.slice(1)}`;
+        app.answers[q.id] = val; saveAnswers();
       }
 
-      function drawOverlay(ctx, W, H){
+      function drawOverlay(ctx, W, H, points){
         ctx.clearRect(0,0,W,H);
-        const cx=W/2, cy=H/2, r=Math.max(24, Math.min(W,H)/12);
+        // Visual guides
         ctx.strokeStyle='#ff9800'; ctx.lineWidth=3;
-        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(cx-20,cy); ctx.lineTo(cx+20,cy); ctx.moveTo(cx,cy-20); ctx.lineTo(cx,cy+20); ctx.stroke();
+        ctx.beginPath(); ctx.rect(W*0.02, H*0.02, W*0.96, H*0.96); ctx.stroke();
+        // Points (aperture & eyes)
+        if (points) {
+          const { ax, ay, lx, ly, rx, ry } = points;
+          ctx.fillStyle='rgba(26,115,232,0.95)'; // eyes
+          if (isFinite(lx) && isFinite(ly)) { ctx.beginPath(); ctx.arc(lx, ly, 4, 0, Math.PI*2); ctx.fill(); }
+          if (isFinite(rx) && isFinite(ry)) { ctx.beginPath(); ctx.arc(rx, ry, 4, 0, Math.PI*2); ctx.fill(); }
+          ctx.strokeStyle='rgba(244, 67, 54, 0.95)'; // aperture
+          if (isFinite(ax) && isFinite(ay)) { ctx.beginPath(); ctx.arc(ax, ay, 10, 0, Math.PI*2); ctx.stroke(); }
+        }
+      }
+
+      // --- MediaPipe dynamic loader (Hands + FaceMesh with iris) ---
+      const MP_BASE = 'https://cdn.jsdelivr.net/npm/@mediapipe';
+      function loadScript(src){ return new Promise((res, rej)=>{ const s=document.createElement('script'); s.src=src; s.async=true; s.onload=res; s.onerror=()=>rej(new Error('load '+src)); document.head.appendChild(s); }); }
+      async function ensureMediaPipe(){
+        if (!window.Hands) await loadScript(`${MP_BASE}/hands/hands.js`);
+        if (!window.FaceMesh) await loadScript(`${MP_BASE}/face_mesh/face_mesh.js`);
+      }
+
+      // Convert normalised landmark -> px
+      function toPx(lm, W, H){ return { x: lm.x * W, y: lm.y * H }; }
+
+      // Compute iris centers from FaceMesh landmarks (requires refineLandmarks:true)
+      function irisCenters(landmarks, W, H){
+        if (!landmarks || landmarks.length < 478) return null;
+        const L = [468,469,470,471,472];
+        const R = [473,474,475,476,477];
+        const avg = (idxs)=>{
+          let sx=0, sy=0; for (const i of idxs){ sx += landmarks[i].x; sy += landmarks[i].y; }
+          return { x: (sx/idxs.length)*W, y: (sy/idxs.length)*H };
+        };
+        return { left: avg(L), right: avg(R) };
       }
 
       async function loop(){
         const ctx = overlay.getContext('2d');
         const W = overlay.width, H = overlay.height;
-        drawOverlay(ctx, W, H);
 
-        const cx=W/2, cy=H/2; // target center
-        if (detector && video.readyState >= 2) {
-          try {
-            const faces = await detector.detect(video);
-            if (faces && faces[0]) {
-              const f = faces[0];
-              const bb = f.boundingBox;
-              // Landmarks if provided; otherwise approximate within bbox
-              const lm = f.landmarks || [];
-              let l=null, r=null;
-              const leftLM  = lm.find(m => (m.type||'').toLowerCase().includes('left'))  || lm.find(m=>m.type==='leftEye');
-              const rightLM = lm.find(m => (m.type||'').toLowerCase().includes('right')) || lm.find(m=>m.type==='rightEye');
-              if (leftLM && leftLM.locations && leftLM.locations[0]) l = leftLM.locations[0];
-              if (rightLM && rightLM.locations && rightLM.locations[0]) r = rightLM.locations[0];
-              if (!l || !r) {
-                l = { x: bb.x + bb.width*0.35, y: bb.y + bb.height*0.42 };
-                r = { x: bb.x + bb.width*0.65, y: bb.y + bb.height*0.42 };
-              }
-              // Visualise eye points
-              ctx.fillStyle='rgba(26,115,232,0.9)';
-              ctx.beginPath(); ctx.arc(l.x, l.y, 4, 0, Math.PI*2); ctx.fill();
-              ctx.beginPath(); ctx.arc(r.x, r.y, 4, 0, Math.PI*2); ctx.fill();
+        // Run models on current frame (if available)
+        try { if (face) await face.send({ image: video }); } catch(e){}
+        try { if (hands) await hands.send({ image: video }); } catch(e){}
 
-              const dl = Math.hypot(cx - l.x, cy - l.y);
-              const dr = Math.hypot(cx - r.x, cy - r.y);
-              const winner = (dl < dr) ? 'left' : 'right';
-              if (winner === lastWinner) stableCount++; else { lastWinner = winner; stableCount = 1; }
-              // Require stability and margin
-              if (stableCount > 30 && Math.abs(dl - dr) > 10) {
-                select(winner);
-              }
-            }
-          } catch(_) { /* ignore transient detection errors */ }
+        let ax=NaN, ay=NaN, lx=NaN, ly=NaN, rx=NaN, ry=NaN;
+
+        // Eyes from FaceMesh
+        if (faceLM && faceLM.length) {
+          const iris = irisCenters(faceLM, W, H);
+          if (iris) { lx = iris.left.x; ly = iris.left.y; rx = iris.right.x; ry = iris.right.y; }
         }
+        // Aperture from Hands (thumb tip 4, index tip 8)
+        if (handLM && handLM.length) {
+          const h = handLM[0];
+          const t = toPx(h[4], W, H);
+          const i = toPx(h[8], W, H);
+          ax = (t.x + i.x)/2; ay = (t.y + i.y)/2;
+        }
+
+        drawOverlay(ctx, W, H, { ax, ay, lx, ly, rx, ry });
+
+        // Decide winner only when we have both eyes and an aperture
+        if (isFinite(ax) && isFinite(ay) && isFinite(lx) && isFinite(ly) && isFinite(rx) && isFinite(ry)) {
+          const dl = Math.hypot(ax - lx, ay - ly);
+          const dr = Math.hypot(ax - ry, ay - ry);
+          const winner = (dl < dr) ? 'left' : 'right';
+          if (winner === lastWinner) stableCount++; else { lastWinner = winner; stableCount = 1; }
+          // require stability and a minimal distance gap
+          if (stableCount > 20 && Math.abs(dl - dr) > 8) {
+            select(winner);
+          }
+        }
+
         rafId = requestAnimationFrame(loop);
       }
 
@@ -490,17 +528,31 @@
           resultEl.textContent = 'Camera not supported in this browser/device.'; return;
         }
         try {
-          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
-          video.srcObject = stream; await video.play();
-          // Size overlay to video
+          // Start camera
+          const ms = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+          stream = ms; video.srcObject = stream; await video.play();
+          // Size overlay to video once metadata is ready
           const setDims = () => { overlay.width = video.videoWidth || 640; overlay.height = video.videoHeight || 480; };
           if (video.readyState >= 2) setDims(); else video.addEventListener('loadedmetadata', setDims, { once:true });
-          // Shape Detection API (optional)
-          if ('FaceDetector' in window) {
-            try { detector = new window.FaceDetector({ fastMode: true, maxDetectedFaces: 1 }); }
-            catch { detector = null; }
+
+          // Try to load MediaPipe for robust face & hand landmarks
+          try {
+            await ensureMediaPipe();
+            // FaceMesh
+            face = new window.FaceMesh({ locateFile: f => `${MP_BASE}/face_mesh/${f}` });
+            face.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+            face.onResults(res => { faceLM = (res.multiFaceLandmarks && res.multiFaceLandmarks[0]) || null; });
+            // Hands
+            hands = new window.Hands({ locateFile: f => `${MP_BASE}/hands/${f}` });
+            hands.setOptions({ maxNumHands: 2, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+            hands.onResults(res => { handLM = res.multiHandLandmarks || null; });
+          } catch (e) {
+            console.warn('MediaPipe not available, falling back to limited mode.', e);
+            face = null; hands = null;
           }
-          startBtn.disabled = true; stopBtn.disabled = false; resultEl.textContent = 'Align your finger-circle with the target.';
+
+          startBtn.disabled = true; stopBtn.disabled = false;
+          resultEl.textContent = 'Show your hand circle between your face and camera. Look through it at the camera lens.';
           loop();
         } catch (e) {
           resultEl.textContent = 'Camera permission denied or unavailable.';
