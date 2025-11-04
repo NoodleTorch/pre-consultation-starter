@@ -6,7 +6,7 @@
       "id": "consent",
       "type": "single",
       "label": "Before we begin — please read and acknowledge",
-      "help": "Do you consent to completing a short pre‑consultation questionnaire? Your answers will be reviewed by the clinic team. You can stop anytime. Your answers are kept on this device until you choose to submit.",
+      "help": "Your answers will be reviewed by the clinic team. You can stop anytime. Your answers are kept on this device until you choose to submit.",
       "input": { "style": "big" },
       "options": [
         { "value": "ok", "label": "I agree — continue" }
@@ -45,7 +45,6 @@
       "type": "single",
       "required": true,
       "label": "What is the main reason for your appointment?",
-      "help": "If you're here because of a new or worsening symptom, choose 'Other eye issue / new or worsening symptoms'.",
       "input": { "style": "big" },
       "options": [
         { "value": "glaucoma", "label": "Glaucoma / eye pressure check" },
