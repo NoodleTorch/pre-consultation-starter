@@ -386,10 +386,10 @@
     }
   
     function renderOcularDominance(q) {
-      // Webcam-assisted ocular dominance (beta, diagnostic)
-      // Detects the user's finger "aperture" (midpoint between thumb tip & index tip)
-      // and compares its position to left/right iris centers. The closer eye is inferred
-      // as dominant while the user looks through the hand circle toward the camera lens.
+      // Webcam-assisted ocular dominance (diagnostic)
+      // Two modes:
+      //  - "hand" (default): detect aperture from thumb/index midpoint + iris centers
+      //  - "target": use screen-center target; user aligns finger circle to center (no hand landmarks needed)
       const wrap = document.createElement('div');
       wrap.className = 'ocular-wrap';
 
@@ -404,15 +404,24 @@
       controls.style.gap = '8px';
       const startBtn = document.createElement('button'); startBtn.type='button'; startBtn.className='btn primary'; startBtn.textContent='Enable camera (beta)';
       const stopBtn  = document.createElement('button'); stopBtn.type='button'; stopBtn.className='btn'; stopBtn.textContent='Stop'; stopBtn.disabled = true;
+      const modeBtn  = document.createElement('button'); modeBtn.type='button'; modeBtn.className='btn'; modeBtn.textContent='Use on-screen target instead';
       const resultEl = document.createElement('div'); resultEl.style.marginLeft='auto'; resultEl.style.fontWeight='600'; resultEl.textContent='—';
-      controls.append(startBtn, stopBtn, resultEl);
+      controls.append(startBtn, stopBtn, modeBtn, resultEl);
       wrap.appendChild(controls);
 
-      // Live instructions (explicitly say: use hand circle between face and camera)
+      // Live instructions
       const tips = document.createElement('div');
       tips.className = 'notice';
-      tips.textContent = 'Hold a small circle made with your thumb and index finger about 30–50 cm in front of your face, BETWEEN your face and the camera (not the screen). Keep both eyes open and look through the circle at the camera lens. Hold steady for 1–2 seconds.';
+      tips.textContent = 'HAND MODE: Hold a small circle with thumb+index 30–50 cm in front of your face, BETWEEN your face and the camera (not the screen). Keep both eyes open and look through the circle at the camera lens. Hold steady for 1–2 seconds.';
       wrap.appendChild(tips);
+
+      // Status strip
+      const status = document.createElement('div');
+      status.style.fontSize = '0.95rem';
+      status.style.opacity = '0.85';
+      status.style.margin = '6px 0 2px';
+      status.textContent = 'Face: ❌  Eyes: ❌  Hand: ❌  Stability: 0/20  Mode: hand';
+      wrap.appendChild(status);
 
       // Video + overlay
       const stage = document.createElement('div');
@@ -423,7 +432,7 @@
       stage.append(video, overlay);
       wrap.appendChild(stage);
 
-      // Minimal choice row (kept for Next navigation; selection is auto-set on detection)
+      // Minimal choice row (auto-set on detection)
       const choices = document.createElement('div');
       choices.className = 'options single';
       ['left','right','unsure'].forEach(v=>{
@@ -436,6 +445,20 @@
       // Detection state
       let stream=null, rafId=null, face=null, hands=null, lastWinner=null, stableCount=0;
       let faceLM=null, handLM=null; // latest landmarks
+      let mode = 'hand'; // 'hand' | 'target'
+      let noFaceFrames=0, noHandFrames=0;
+
+      function setMode(next){
+        mode = next;
+        status.textContent = status.textContent.replace(/Mode: .*/, 'Mode: ' + mode);
+        if (mode === 'target') {
+          tips.textContent = 'TARGET MODE: Align your finger circle with the center target on screen and look through it toward the camera. Hold steady for 1–2 seconds.';
+          modeBtn.textContent = 'Use hand-circle mode instead';
+        } else {
+          tips.textContent = 'HAND MODE: Hold a small circle with thumb+index 30–50 cm in front of your face, BETWEEN your face and the camera (not the screen). Keep both eyes open and look through the circle at the camera lens. Hold steady for 1–2 seconds.';
+          modeBtn.textContent = 'Use on-screen target instead';
+        }
+      }
 
       function select(val){
         const btn = choices.querySelector(`.option[data-value="${val}"]`);
@@ -446,9 +469,15 @@
 
       function drawOverlay(ctx, W, H, points){
         ctx.clearRect(0,0,W,H);
-        // Visual guides
-        ctx.strokeStyle='#ff9800'; ctx.lineWidth=3;
-        ctx.beginPath(); ctx.rect(W*0.02, H*0.02, W*0.96, H*0.96); ctx.stroke();
+        const cx=W/2, cy=H/2, r=Math.max(24, Math.min(W,H)/10);
+        if (mode === 'target') {
+          ctx.strokeStyle='#ff9800'; ctx.lineWidth=3; // center bullseye
+          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx-24,cy); ctx.lineTo(cx+24,cy); ctx.moveTo(cx,cy-24); ctx.lineTo(cx,cy+24); ctx.stroke();
+        } else {
+          ctx.strokeStyle='#ff9800'; ctx.lineWidth=3;
+          ctx.beginPath(); ctx.rect(W*0.02, H*0.02, W*0.96, H*0.96); ctx.stroke();
+        }
         // Points (aperture & eyes)
         if (points) {
           const { ax, ay, lx, ly, rx, ry } = points;
@@ -468,10 +497,17 @@
         if (!window.FaceMesh) await loadScript(`${MP_BASE}/face_mesh/face_mesh.js`);
       }
 
+      // Fallback FaceDetector (eyes approx) if MediaPipe blocked
+      let faceDetector = null;
+      function ensureFaceDetector(){
+        if ('FaceDetector' in window) {
+          try { faceDetector = new window.FaceDetector({ fastMode:true, maxDetectedFaces:1 }); } catch(_){}
+        }
+      }
+
       // Convert normalised landmark -> px
       function toPx(lm, W, H){ return { x: lm.x * W, y: lm.y * H }; }
 
-      // Compute iris centers from FaceMesh landmarks (requires refineLandmarks:true)
       function irisCenters(landmarks, W, H){
         if (!landmarks || landmarks.length < 478) return null;
         const L = [468,469,470,471,472];
@@ -483,35 +519,68 @@
         return { left: avg(L), right: avg(R) };
       }
 
+      let frame = 0; // throttle heavy sends
       async function loop(){
         const ctx = overlay.getContext('2d');
         const W = overlay.width, H = overlay.height;
+        const cx=W/2, cy=H/2;
 
-        // Run models on current frame (if available)
-        try { if (face) await face.send({ image: video }); } catch(e){}
-        try { if (hands) await hands.send({ image: video }); } catch(e){}
+        // Throttle sends
+        frame = (frame+1)%2; // run every 2nd frame to reduce CPU
+        if (frame===0) {
+          try { if (face) await face.send({ image: video }); } catch(e){}
+          try { if (hands) await hands.send({ image: video }); } catch(e){}
+        }
 
         let ax=NaN, ay=NaN, lx=NaN, ly=NaN, rx=NaN, ry=NaN;
 
-        // Eyes from FaceMesh
+        // Eyes from FaceMesh or FaceDetector
         if (faceLM && faceLM.length) {
           const iris = irisCenters(faceLM, W, H);
-          if (iris) { lx = iris.left.x; ly = iris.left.y; rx = iris.right.x; ry = iris.right.y; }
+          if (iris) { lx = iris.left.x; ly = iris.left.y; rx = iris.right.x; ry = iris.right.y; noFaceFrames=0; }
+        } else if (faceDetector) {
+          try {
+            const faces = await faceDetector.detect(video);
+            if (faces && faces[0]) {
+              const f = faces[0]; const bb = f.boundingBox; const lm = f.landmarks||[];
+              const lmkL = lm.find(m=> (m.type||'').toLowerCase().includes('left'));
+              const lmkR = lm.find(m=> (m.type||'').toLowerCase().includes('right'));
+              if (lmkL && lmkL.locations && lmkL.locations[0]) { lx = lmkL.locations[0].x; ly = lmkL.locations[0].y; }
+              if (lmkR && lmkR.locations && lmkR.locations[0]) { rx = lmkR.locations[0].x; ry = lmkR.locations[0].y; }
+              if (!isFinite(lx) || !isFinite(rx)) { // approximate eye centers from bbox
+                lx = bb.x + bb.width*0.35; ly = bb.y + bb.height*0.42; rx = bb.x + bb.width*0.65; ry = bb.y + bb.height*0.42;
+              }
+              noFaceFrames=0;
+            } else { noFaceFrames++; }
+          } catch(_) { noFaceFrames++; }
+        } else {
+          noFaceFrames++;
         }
-        // Aperture from Hands (thumb tip 4, index tip 8)
-        if (handLM && handLM.length) {
-          const h = handLM[0];
-          const t = toPx(h[4], W, H);
-          const i = toPx(h[8], W, H);
-          ax = (t.x + i.x)/2; ay = (t.y + i.y)/2;
-        }
+
+        // Aperture from Hands (thumb tip 4, index tip 8). In target mode, use center as aperture.
+        if (mode==='hand') {
+          if (handLM && handLM.length) {
+            const h = handLM[0];
+            const t = toPx(h[4], W, H);
+            const i = toPx(h[8], W, H);
+            ax = (t.x + i.x)/2; ay = (t.y + i.y)/2; noHandFrames=0;
+          } else { noHandFrames++; }
+        } else { ax = cx; ay = cy; noHandFrames=0; }
 
         drawOverlay(ctx, W, H, { ax, ay, lx, ly, rx, ry });
 
+        // Status + guidance
+        const haveEyes = isFinite(lx)&&isFinite(ly)&&isFinite(rx)&&isFinite(ry);
+        const haveAperture = isFinite(ax)&&isFinite(ay);
+        status.textContent = `Face: ${noFaceFrames<2?'✅':'❌'}  Eyes: ${haveEyes?'✅':'❌'}  Hand: ${mode==='hand'?(noHandFrames<2?'✅':'❌'):'—'}  Stability: ${Math.min(stableCount,20)}/20  Mode: ${mode}`;
+        if (noFaceFrames>60) tips.textContent = 'Move closer and ensure good lighting. Keep your face centered in the frame.';
+        else if (mode==='hand' && noHandFrames>60) tips.textContent = 'We can\'t see your hand circle. Bring it between your face and the CAMERA lens and make the circle smaller.';
+        else if (haveEyes && haveAperture) tips.textContent = (mode==='hand' ? 'Hold steady. Detecting…' : 'Align the circle with the target and hold steady…');
+
         // Decide winner only when we have both eyes and an aperture
-        if (isFinite(ax) && isFinite(ay) && isFinite(lx) && isFinite(ly) && isFinite(rx) && isFinite(ry)) {
+        if (haveEyes && haveAperture) {
           const dl = Math.hypot(ax - lx, ay - ly);
-          const dr = Math.hypot(ax - ry, ay - ry);
+          const dr = Math.hypot(ax - rx, ay - ry); // FIXED bug: use rx for x
           const winner = (dl < dr) ? 'left' : 'right';
           if (winner === lastWinner) stableCount++; else { lastWinner = winner; stableCount = 1; }
           // require stability and a minimal distance gap
@@ -531,28 +600,30 @@
           // Start camera
           const ms = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
           stream = ms; video.srcObject = stream; await video.play();
-          // Size overlay to video once metadata is ready
           const setDims = () => { overlay.width = video.videoWidth || 640; overlay.height = video.videoHeight || 480; };
           if (video.readyState >= 2) setDims(); else video.addEventListener('loadedmetadata', setDims, { once:true });
 
-          // Try to load MediaPipe for robust face & hand landmarks
+          // Try to load MediaPipe; if blocked, fall back to FaceDetector + target mode
+          let mpOk = true;
           try {
             await ensureMediaPipe();
-            // FaceMesh
             face = new window.FaceMesh({ locateFile: f => `${MP_BASE}/face_mesh/${f}` });
             face.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
             face.onResults(res => { faceLM = (res.multiFaceLandmarks && res.multiFaceLandmarks[0]) || null; });
-            // Hands
             hands = new window.Hands({ locateFile: f => `${MP_BASE}/hands/${f}` });
             hands.setOptions({ maxNumHands: 2, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
             hands.onResults(res => { handLM = res.multiHandLandmarks || null; });
           } catch (e) {
-            console.warn('MediaPipe not available, falling back to limited mode.', e);
-            face = null; hands = null;
+            mpOk = false;
+          }
+          if (!mpOk) {
+            ensureFaceDetector();
+            setMode('target');
+            tips.textContent = 'TARGET MODE (fallback): Your browser blocked AI tracking. Align your finger circle with the center target and hold steady.';
           }
 
           startBtn.disabled = true; stopBtn.disabled = false;
-          resultEl.textContent = 'Show your hand circle between your face and camera. Look through it at the camera lens.';
+          resultEl.textContent = mode==='hand' ? 'Show your hand circle between your face and camera. Look through it at the camera lens.' : 'Align your finger circle with the center target.';
           loop();
         } catch (e) {
           resultEl.textContent = 'Camera permission denied or unavailable.';
@@ -567,6 +638,7 @@
 
       startBtn.addEventListener('click', start);
       stopBtn.addEventListener('click', stop);
+      modeBtn.addEventListener('click', ()=> setMode(mode==='hand'?'target':'hand'));
 
       return wrap;
     }
