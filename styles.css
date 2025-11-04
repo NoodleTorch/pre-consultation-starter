@@ -256,6 +256,31 @@ input[type="text"], input[type="number"], textarea{
 .slider-wrap{ display:flex; align-items:center; gap:.5rem; /* tighten spacing to fit beside slider */ }
 .number-input{ width:7ch; padding:.4rem .5rem; font-size:1.1rem; }
 
+/* Diagnosis box for ocular dominance */
+.diagnosis-box{
+  border: 2px solid #2e7d32;
+  background: #e8f5e9;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin: 10px 0;
+}
+.diagnosis-text{
+  font-size: 2rem;
+  font-weight: 800;
+  color: #2e7d32;
+  line-height: 1.2;
+  text-align: center;
+}
+
+/* Notice text formatting */
+.notice{
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1.5;
+  white-space: pre-line; /* render 
+ as line breaks */
+}
+
 /* ---- Motion respect ---- */
 @media (prefers-reduced-motion: reduce){
   *{transition:none !important}
