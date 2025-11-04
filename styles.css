@@ -107,19 +107,12 @@ main{max-width: 840px; margin: 0 auto 80px;}
 }
 
 /* Key override: single-choice tiles no longer stretch full width */
-.options.single .option{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;            /* don't grow to fill line */
-  width: auto !important;    /* fit to text */
-  min-width: 120px;          /* big tap target */
-  padding-inline: calc(var(--tile-pad) * 1.25);
-  text-align: center;        /* tidy label */
+$1
+  flex-direction: column;
 }
 
 /* Keep multi-select filling columns */
-.options.multi .option{ width: 100%; }
+.options.multi .option{ width: 100%; display:flex; flex-direction: column; }
 
 
 /* Make multi-select tiles wrap to two columns on wider screens */
@@ -235,7 +228,7 @@ input[type="text"], input[type="number"], textarea{
 }
 
 /* Drop tiles with images */
-.options .option .opt-img{
+.options .option .option-img{
   display:block;
   width:120px;
   height:80px;
@@ -246,7 +239,7 @@ input[type="text"], input[type="number"], textarea{
   background: var(--tile-bg);
 }
 /* Center label only when an image is present */
-.options .option .opt-img + .option-label{
+.options .option .option-img + .option-label{
   display:block;
   text-align:center;
   line-height:1.2;
