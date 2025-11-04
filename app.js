@@ -417,7 +417,7 @@
       });
 
       return mount;
-    
+    }
 
     function restoreAnswer(q) {
       const val = app.answers[q.id];
@@ -587,4 +587,72 @@
   
     function prettyAnswer(val, q) {
       if (Array.isArray(val)) return val.join(', ');
-      if (val ==
+      if (val == null) return '';
+      if (q && q.type === 'slider') return String(val);
+      if (typeof val === 'string') return val;
+      try { return JSON.stringify(val); } catch { return String(val); }
+    }
+
+    // Utilities
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+    }
+    function showError(id, msg) {
+      const box = document.getElementById('error_' + id);
+      if (box) { box.textContent = msg; box.classList.add('show'); }
+    }
+    function clearError(id) {
+      const box = document.getElementById('error_' + id);
+      if (box) { box.textContent = ''; box.classList.remove('show'); }
+    }
+
+    // --- Dictation helper ---
+    function attachDictation(inputEl, buttonEl) {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) { buttonEl.classList.add('hidden'); buttonEl.disabled = true; return; }
+
+      let rec = null;
+      let active = false;
+
+      function setActive(on) {
+        active = on;
+        buttonEl.setAttribute('aria-pressed', on ? 'true' : 'false');
+        buttonEl.textContent = on ? 'Stop dictation' : 'Dictate';
+      }
+
+      buttonEl.addEventListener('click', () => {
+        if (active && rec) { rec.stop(); return; }
+
+        rec = new SR();
+        rec.lang = 'en-AU';
+        rec.interimResults = true;
+        rec.continuous = false;
+
+        let interim = '';
+        let committed = inputEl.value || '';
+
+        rec.onstart = () => setActive(true);
+        rec.onend   = () => setActive(false);
+        rec.onerror = () => setActive(false);
+
+        rec.onresult = (e) => {
+          interim = '';
+          for (let i = e.resultIndex; i < e.results.length; i++) {
+            const seg = e.results[i][0].transcript;
+            if (e.results[i].isFinal) {
+              committed = (committed ? committed + ' ' : '') + seg;
+              inputEl.value = committed.trim();
+              inputEl.dispatchEvent(new Event('input',  { bubbles: true }));
+              inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+            } else {
+              interim += seg;
+            }
+          }
+          buttonEl.title = interim ? ('Listening… ' + interim) : 'Click to dictate';
+        };
+
+        rec.start();
+      });
+    }
+
+  })();
