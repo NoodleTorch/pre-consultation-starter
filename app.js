@@ -386,38 +386,140 @@
     }
   
     function renderOcularDominance(q) {
+      // Webcam-assisted ocular dominance (beta)
+      // Approach: user aligns their finger-circle with the on-screen target; we find eye centers
+      // via Shape Detection API if available (FaceDetector) and decide which eye is closer.
       const wrap = document.createElement('div');
-      const p = document.createElement('p');
-      p.className = 'help';
-      p.textContent = q.help || 'Quick check using the finger‑circle method. If unsure, pick Not sure.';
-      wrap.appendChild(p);
-  
-      const opts = [
-        { value: 'left', label: 'Left' },
-        { value: 'right', label: 'Right' },
-        { value: 'unsure', label: 'Not sure' }
-      ];
-      const box = document.createElement('div');
-      box.className = 'options single';
-      opts.forEach(opt => {
-        const b = document.createElement('button');
-        b.type = 'button'; b.className = 'option'; b.textContent = opt.label; b.dataset.value = opt.value;
-        b.addEventListener('click', () => {
-          box.querySelectorAll('.option').forEach(x => x.classList.remove('selected'));
-          b.classList.add('selected');
-        });
-        box.appendChild(b);
+      wrap.className = 'ocular-wrap';
+
+      const info = document.createElement('div');
+      info.className = 'help';
+      info.textContent = q.help || 'Beta camera tool: Make a small circle with thumb+index. Hold it at arm\'s length and line it up with the on‑screen target. Keep both eyes open and look through the circle.';
+      wrap.appendChild(info);
+
+      // Controls
+      const controls = document.createElement('div');
+      controls.style.display = 'flex';
+      controls.style.gap = '8px';
+      const startBtn = document.createElement('button'); startBtn.type='button'; startBtn.className='btn primary'; startBtn.textContent='Enable camera (beta)';
+      const stopBtn  = document.createElement('button'); stopBtn.type='button'; stopBtn.className='btn'; stopBtn.textContent='Stop'; stopBtn.disabled = true;
+      const resultEl = document.createElement('div'); resultEl.style.marginLeft='auto'; resultEl.style.fontWeight='600'; resultEl.textContent='—';
+      controls.append(startBtn, stopBtn, resultEl);
+      wrap.appendChild(controls);
+
+      // Video + overlay
+      const stage = document.createElement('div');
+      stage.style.position='relative'; stage.style.width='100%'; stage.style.maxWidth='560px'; stage.style.aspectRatio='4/3'; stage.style.border='2px solid var(--border)'; stage.style.borderRadius='12px'; stage.style.overflow='hidden'; stage.style.margin='10px 0';
+      const video = document.createElement('video');
+      video.autoplay = true; video.playsInline = true; video.muted = true; video.style.width='100%'; video.style.height='100%'; video.style.objectFit='cover';
+      const overlay = document.createElement('canvas'); overlay.style.position='absolute'; overlay.style.left='0'; overlay.style.top='0'; overlay.style.width='100%'; overlay.style.height='100%'; overlay.style.pointerEvents='none';
+      stage.append(video, overlay);
+      wrap.appendChild(stage);
+
+      // Fallback manual selection (still rendered so Next works) — we will auto-select on detection
+      const choices = document.createElement('div');
+      choices.className = 'options single';
+      ['left','right','unsure'].forEach(v=>{
+        const b=document.createElement('button'); b.type='button'; b.className='option'; b.dataset.value=v; b.textContent = v==='unsure' ? 'Not sure' : (v.charAt(0).toUpperCase()+v.slice(1));
+        b.addEventListener('click', ()=>{ choices.querySelectorAll('.option').forEach(x=>x.classList.remove('selected')); b.classList.add('selected'); });
+        choices.appendChild(b);
       });
-      wrap.appendChild(box);
-  
-      // Placeholder for future webcam helper button
-      const small = document.createElement('small');
-      small.textContent = 'Webcam helper coming soon';
-      wrap.appendChild(small);
+      wrap.appendChild(choices);
+
+      // Detection state
+      let stream=null, rafId=null, detector=null, lastWinner=null, stableCount=0;
+
+      function select(val){
+        const btn = choices.querySelector(`.option[data-value="${val}"]`);
+        if (btn) { choices.querySelectorAll('.option').forEach(x=>x.classList.remove('selected')); btn.classList.add('selected'); }
+        resultEl.textContent = `Likely: ${val==='unsure'?'Undetermined':val.charAt(0).toUpperCase()+val.slice(1)}`;
+      }
+
+      function drawOverlay(ctx, W, H){
+        ctx.clearRect(0,0,W,H);
+        const cx=W/2, cy=H/2, r=Math.max(24, Math.min(W,H)/12);
+        ctx.strokeStyle='#ff9800'; ctx.lineWidth=3;
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx-20,cy); ctx.lineTo(cx+20,cy); ctx.moveTo(cx,cy-20); ctx.lineTo(cx,cy+20); ctx.stroke();
+      }
+
+      async function loop(){
+        const ctx = overlay.getContext('2d');
+        const W = overlay.width, H = overlay.height;
+        drawOverlay(ctx, W, H);
+
+        const cx=W/2, cy=H/2; // target center
+        if (detector && video.readyState >= 2) {
+          try {
+            const faces = await detector.detect(video);
+            if (faces && faces[0]) {
+              const f = faces[0];
+              const bb = f.boundingBox;
+              // Landmarks if provided; otherwise approximate within bbox
+              const lm = f.landmarks || [];
+              let l=null, r=null;
+              const leftLM  = lm.find(m => (m.type||'').toLowerCase().includes('left'))  || lm.find(m=>m.type==='leftEye');
+              const rightLM = lm.find(m => (m.type||'').toLowerCase().includes('right')) || lm.find(m=>m.type==='rightEye');
+              if (leftLM && leftLM.locations && leftLM.locations[0]) l = leftLM.locations[0];
+              if (rightLM && rightLM.locations && rightLM.locations[0]) r = rightLM.locations[0];
+              if (!l || !r) {
+                l = { x: bb.x + bb.width*0.35, y: bb.y + bb.height*0.42 };
+                r = { x: bb.x + bb.width*0.65, y: bb.y + bb.height*0.42 };
+              }
+              // Visualise eye points
+              ctx.fillStyle='rgba(26,115,232,0.9)';
+              ctx.beginPath(); ctx.arc(l.x, l.y, 4, 0, Math.PI*2); ctx.fill();
+              ctx.beginPath(); ctx.arc(r.x, r.y, 4, 0, Math.PI*2); ctx.fill();
+
+              const dl = Math.hypot(cx - l.x, cy - l.y);
+              const dr = Math.hypot(cx - r.x, cy - r.y);
+              const winner = (dl < dr) ? 'left' : 'right';
+              if (winner === lastWinner) stableCount++; else { lastWinner = winner; stableCount = 1; }
+              // Require stability and margin
+              if (stableCount > 30 && Math.abs(dl - dr) > 10) {
+                select(winner);
+              }
+            }
+          } catch(_) { /* ignore transient detection errors */ }
+        }
+        rafId = requestAnimationFrame(loop);
+      }
+
+      async function start(){
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          resultEl.textContent = 'Camera not supported in this browser/device.'; return;
+        }
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+          video.srcObject = stream; await video.play();
+          // Size overlay to video
+          const setDims = () => { overlay.width = video.videoWidth || 640; overlay.height = video.videoHeight || 480; };
+          if (video.readyState >= 2) setDims(); else video.addEventListener('loadedmetadata', setDims, { once:true });
+          // Shape Detection API (optional)
+          if ('FaceDetector' in window) {
+            try { detector = new window.FaceDetector({ fastMode: true, maxDetectedFaces: 1 }); }
+            catch { detector = null; }
+          }
+          startBtn.disabled = true; stopBtn.disabled = false; resultEl.textContent = 'Align your finger-circle with the target.';
+          loop();
+        } catch (e) {
+          resultEl.textContent = 'Camera permission denied or unavailable.';
+        }
+      }
+
+      function stop(){
+        if (rafId) cancelAnimationFrame(rafId), rafId=null;
+        if (stream) { stream.getTracks().forEach(t=>t.stop()); stream=null; }
+        startBtn.disabled = false; stopBtn.disabled = true; resultEl.textContent = '—';
+      }
+
+      startBtn.addEventListener('click', start);
+      stopBtn.addEventListener('click', stop);
+
       return wrap;
     }
-  
-    function restoreAnswer(q) {
+
+    function restoreAnswer(q) {(q) {
       const val = app.answers[q.id];
       if (val == null) return;
 
@@ -473,7 +575,7 @@
       }
       if (q.type === 'slider') {
         const range = el.qwrap.querySelector('input[type=range]');
-        return range ? parseInt(range.value, 10) : null;
+        return range ? parseFloat(range.value) : null;
       }
       if (q.type === 'text') {
         const ctrl = el.qwrap.querySelector('input, textarea');
