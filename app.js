@@ -179,16 +179,61 @@
     function renderQuestion(q) {
       // Clear container
       el.qwrap.innerHTML = '';
-  
+
       const wrapper = document.createElement('div');
       wrapper.className = 'question';
-  
+
       const h = document.createElement('h2');
       h.textContent = q.label || 'Question';
       wrapper.appendChild(h);
-  
+
+      // Help text (from schema only; modules should not inject duplicates)
       if (q.help) {
-        const loading = document.createElement('div');
+        const help = document.createElement('div');
+        help.className = 'help';
+        help.textContent = q.help;
+        wrapper.appendChild(help);
+      }
+
+      // Render control by type
+      let ui = null;
+      if (q.type === 'single' && typeof renderSingle === 'function') {
+        ui = renderSingle(q);
+      } else if (q.type === 'multi' && typeof renderMulti === 'function') {
+        ui = renderMulti(q);
+      } else if (q.type === 'text' && typeof renderText === 'function') {
+        ui = renderText(q);
+      } else if (q.type === 'slider' && typeof renderSlider === 'function') {
+        ui = renderSlider(q);
+      } else if (q.type === 'ocular_dominance') {
+        ui = renderOcularDominance(q);
+      } else {
+        const msg = document.createElement('div');
+        msg.className = 'notice';
+        msg.textContent = 'Unsupported question type: ' + (q.type || 'unknown');
+        ui = msg;
+      }
+
+      if (ui) wrapper.appendChild(ui);
+
+      // Inline error holder
+      const err = document.createElement('div');
+      err.id = 'error_' + q.id;
+      err.className = 'error';
+      wrapper.appendChild(err);
+
+      el.qwrap.appendChild(wrapper);
+
+      // Restore any saved answer onto the freshly rendered UI
+      restoreAnswer(q);
+    }
+
+    // Minimal lazy-loader host for ocular dominance
+    function renderOcularDominance(q) {
+      const mount = document.createElement('div');
+      mount.className = 'ocular-wrap';
+
+      const loading = document.createElement('div');
       loading.className = 'notice';
       loading.textContent = 'Loading camera tool…';
       mount.appendChild(loading);
@@ -210,6 +255,44 @@
       });
 
       return mount;
+    }
+
+    // Text renderer (supports readonly info pages)
+    function renderText(q) {
+      const wrap = document.createElement('div');
+      wrap.className = 'text-row';
+      const isReadonly = q.input && q.input.readonly;
+      const isArea = q.input && q.input.textarea;
+
+      // Optional preset/notice block
+      if (q.preset) {
+        const notice = document.createElement('div');
+        notice.className = 'notice';
+        notice.textContent = q.preset;
+        wrap.appendChild(notice);
+      }
+
+      // For readonly info screens: do not render an input at all (removes empty white box)
+      if (isReadonly) {
+        return wrap;
+      }
+
+      // Editable text control (+ mic)
+      const ctrl = document.createElement(isArea ? 'textarea' : 'input');
+      if (!isArea) ctrl.type = 'text';
+      ctrl.id = 'input_' + q.id;
+      ctrl.placeholder = q.input && q.input.placeholder ? q.input.placeholder : '';
+      wrap.appendChild(ctrl);
+
+      const micBtn = document.createElement('button');
+      micBtn.type = 'button';
+      micBtn.className = 'btn mic-btn';
+      micBtn.setAttribute('aria-label', 'Start dictation');
+      micBtn.textContent = '🎤';
+      wrap.appendChild(micBtn);
+
+      attachDictation(ctrl, micBtn);
+      return wrap;
     }
 
     function restoreAnswer(q) {
