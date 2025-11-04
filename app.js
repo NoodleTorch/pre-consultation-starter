@@ -519,7 +519,7 @@
       return wrap;
     }
 
-    function restoreAnswer(q) {(q) {
+    function restoreAnswer(q) {
       const val = app.answers[q.id];
       if (val == null) return;
 
@@ -550,9 +550,10 @@
       // Range + numeric fallback
       if (q.type === 'slider') {
         const range = el.qwrap.querySelector('input[type=range]');
-        if (!range) return null;
-        const v = parseFloat(range.value);
-        return Number.isNaN(v) ? null : v;
+        const number = el.qwrap.querySelector('input[type=number]');
+        if (range) range.value = val;
+        if (number) number.value = val;
+        return;
       }
 
       // Text
