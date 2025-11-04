@@ -33,33 +33,16 @@ export function mountOcularDominance({ container, question, save }) {
   modeBtn.className = 'btn';
   modeBtn.textContent = 'Use on-screen target instead';
 
-  const calib = document.createElement('span');
-  calib.textContent = 'Calibration succeeded ✓';
-  calib.style.background = '#e8f5e9';
-  calib.style.color = '#2e7d32';
-  calib.style.border = '1px solid #a5d6a7';
-  calib.style.padding = '4px 8px';
-  calib.style.borderRadius = '9999px';
-  calib.style.fontWeight = '600';
-  calib.style.display = 'inline-flex';
-  calib.style.alignItems = 'center';
-  calib.style.gap = '6px';
-  calib.hidden = true;
+  
 
-  const resultEl = document.createElement('div');
-  resultEl.style.marginLeft = 'auto';
-  resultEl.style.fontWeight = '800';
-  resultEl.style.fontSize = '2rem';
-  resultEl.style.lineHeight = '1.2';
-  resultEl.style.color = '#2e7d32';
-  resultEl.textContent = '—';
+  
 
-  controls.append(startBtn, stopBtn, modeBtn, calib, resultEl);
+  controls.append(startBtn, stopBtn, modeBtn);
   container.appendChild(controls);
 
   const tips = document.createElement('div');
   tips.className = 'notice';
-  tips.textContent = 'HAND MODE: Hold a small circle with thumb+index 30–50 cm in front of your face, BETWEEN your face and the camera (not the screen). Keep both eyes open and look through the circle at the camera lens. Hold steady for 1–2 seconds.';
+  tips.innerHTML = '1) Make a small circle with thumb + index.<br>2) Hold it 30–50 cm in front of your face, between face and CAMERA.<br>3) Look through it at the camera lens and hold steady for ~1–2 seconds.';
   container.appendChild(tips);
 
   const status = document.createElement('div');
@@ -85,6 +68,15 @@ export function mountOcularDominance({ container, question, save }) {
   stage.append(video, overlay);
   container.appendChild(stage);
 
+  // Diagnosis box (large green, separate from instructions)
+  const resultBox = document.createElement('div');
+  resultBox.className = 'diagnosis-box';
+  const resultEl = document.createElement('div');
+  resultEl.className = 'diagnosis-text';
+  resultEl.textContent = '—';
+  resultBox.appendChild(resultEl);
+  container.appendChild(resultBox);
+
   // Keep standard answer buttons so the host app's readAnswer() works
   const choices = document.createElement('div');
   choices.className = 'options single';
@@ -103,7 +95,7 @@ export function mountOcularDominance({ container, question, save }) {
 
   // --- Detection state ---
   let stream = null, rafId = null, face = null, hands = null, faceDetector = null;
-  let lastWinner = null, stableCount = 0, calibCount = 0;
+  let lastWinner = null, stableCount = 0;
   let faceLM = null, handLM = null;
   let mode = 'hand'; // 'hand' | 'target'
   let noFaceFrames = 0, noHandFrames = 0;
@@ -112,12 +104,12 @@ export function mountOcularDominance({ container, question, save }) {
     mode = next;
     status.textContent = status.textContent.replace(/Mode: .*/, 'Mode: ' + mode);
     if (mode === 'target') {
-      tips.textContent = 'TARGET MODE: Align your finger circle with the center target on screen and look through it toward the camera. Hold steady for 1–2 seconds.';
-      modeBtn.textContent = 'Use hand-circle mode instead';
-    } else {
-      tips.textContent = 'HAND MODE: Hold a small circle with thumb+index 30–50 cm in front of your face, BETWEEN your face and the camera (not the screen). Keep both eyes open and look through the circle at the camera lens. Hold steady for 1–2 seconds.';
-      modeBtn.textContent = 'Use on-screen target instead';
-    }
+    tips.innerHTML = '1) Align your finger circle with the center target on screen.<br>2) Look through it toward the camera lens.<br>3) Hold steady for ~1–2 seconds.';
+    modeBtn.textContent = 'Use hand-circle mode instead';
+  } else {
+    tips.innerHTML = '1) Make a small circle with thumb + index.<br>2) Hold it 30–50 cm in front of your face, between face and CAMERA.<br>3) Look through it at the camera lens and hold steady for ~1–2 seconds.';
+    modeBtn.textContent = 'Use on-screen target instead';
+  }
   }
 
   function select(val) {
@@ -221,8 +213,6 @@ export function mountOcularDominance({ container, question, save }) {
     const haveEyes = isFinite(lx) && isFinite(ly) && isFinite(rx) && isFinite(ry);
     const haveAperture = isFinite(ax) && isFinite(ay);
     status.textContent = `Face: ${noFaceFrames < 2 ? '✅' : '❌'}  Eyes: ${haveEyes ? '✅' : '❌'}  Hand: ${mode === 'hand' ? (noHandFrames < 2 ? '✅' : '❌') : '—'}  Stability: ${Math.min(stableCount, 20)}/20  Mode: ${mode}`;
-    if (haveEyes && haveAperture) { calibCount = Math.min(calibCount + 1, 30); } else { calibCount = 0; }
-    calib.hidden = calibCount < 12;
 
     if (noFaceFrames > 60) tips.textContent = 'Move closer and ensure good lighting. Keep your face centered in the frame.';
     else if (mode === 'hand' && noHandFrames > 60) tips.textContent = 'We can\'t see your hand circle. Bring it between your face and the CAMERA lens and make the circle smaller.';
@@ -267,7 +257,10 @@ export function mountOcularDominance({ container, question, save }) {
       }
 
       startBtn.disabled = true; stopBtn.disabled = false;
-      resultEl.textContent = mode === 'hand' ? 'Show your hand circle between your face and camera. Look through it at the camera lens.' : 'Align your finger circle with the center target.';
+      resultEl.textContent = '—';
+      tips.innerHTML = mode === 'hand'
+        ? '1) Make a small circle with thumb + index.<br>2) Hold it 30–50 cm in front of your face, between face and CAMERA.<br>3) Look through it at the camera lens and hold steady for ~1–2 seconds.'
+        : '1) Align your finger circle with the center target on screen.<br>2) Look through it toward the camera lens.<br>3) Hold steady for ~1–2 seconds.';
       loop();
     } catch {
       resultEl.textContent = 'Camera permission denied or unavailable.';
