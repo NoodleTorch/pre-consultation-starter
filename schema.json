@@ -402,11 +402,7 @@
     },
 
     "B4_info": {
-      "id": "B4_info",
-      "type": "text",
-      "label": "Lens options (quick neutral overview)",
-      "input": { "readonly": true },
-      "preset": "Monofocal — Clearest at one distance; reading glasses usually needed for the other distance.
+      $1Monofocal — Clearest at one distance; reading glasses usually needed for the other distance.
 
 Enhanced Monofocal (EDOF‑lite) — Slightly extended depth of focus; fewer halos than full EDOF.
 
@@ -418,8 +414,7 @@ Toric (astigmatism‑correcting) — Can reduce glasses at the chosen distance i
 
 [Visual simulation coming soon for each lens type]
 
-No lens is perfect. Your surgeon will advise what suits your eyes and lifestyle.",
-      "next": "B4_pref_goal"
+No lens is perfect. Your surgeon will advise what suits your eyes and lifestyle.$3: "B4_pref_goal"
     },
 
     "B4_pref_goal": {
