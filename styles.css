@@ -107,8 +107,9 @@ main{max-width: 840px; margin: 0 auto 80px;}
 }
 
 /* Key override: single-choice tiles no longer stretch full width */
-$1
-  flex-direction: column;
+.options.single .option{
+  width:auto;
+  flex: 0 0 auto;
 }
 
 /* Keep multi-select filling columns */
@@ -278,3 +279,13 @@ input[type="text"], input[type="number"], textarea{
 @media (prefers-reduced-motion: reduce){
   *{transition:none !important}
 }
+
+
+.submit-status{
+  margin-top: 12px;
+  min-height: 1.4em;
+  font-weight: 600;
+}
+.submit-status.loading{ color: #93c5fd; }
+.submit-status.success{ color: #86efac; }
+.submit-status.error{ color: #fecaca; }

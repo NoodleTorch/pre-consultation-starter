@@ -32,8 +32,9 @@
 
 <div id="review" class="hidden" role="region" aria-labelledby="reviewTitle">
 <h2 id="reviewTitle">Review & Submit</h2>
-<p>Check your answers. You can go Back to edit, or Submit to finish.</p>
+<p>Check your answers. You can go Back to edit, or Submit to send to the clinic.</p>
 <div id="reviewContent" class="review"></div>
+<div id="reviewStatus" class="submit-status" aria-live="polite"></div>
 <div class="nav">
 <button type="button" class="btn secondary" id="reviewBackBtn">Back</button>
 <button type="button" class="btn success" id="submitBtn">Submit</button>
@@ -42,11 +43,11 @@
 
 
 <div id="submitted" class="hidden" role="region" aria-labelledby="submittedTitle">
-<h2 id="submittedTitle">All done!</h2>
-<p>Your responses have been prepared below. Click to copy or download the file and email it to the clinic.</p>
-<textarea id="output" rows="12" readonly aria-label="Your answers (JSON)"></textarea>
+<h2 id="submittedTitle">Submitted</h2>
+<p id="submittedMessage">Your responses were sent successfully.</p>
+<textarea id="output" rows="12" readonly aria-label="Submission details (JSON)"></textarea>
 <div class="nav">
-<button type="button" class="btn" id="copyBtn">Copy to clipboard</button>
+<button type="button" class="btn" id="copyBtn">Copy details</button>
 <button type="button" class="btn" id="downloadBtn">Download JSON</button>
 <button type="button" class="btn secondary" id="restartBtn">Start over</button>
 </div>
@@ -59,6 +60,7 @@
 </footer>
 
 
+<script src="config.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

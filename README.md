@@ -1,16 +1,52 @@
 # Pre‑Consultation Website (Schema‑Driven MVP)
 
-A minimal, accessibility‑first questionnaire for cataract & glaucoma clinics. **One question per page**, large tap targets, keyboard friendly. The **questionnaire lives in `schema.json`** so you can edit wording/options/flow without touching code.
+A minimal, accessibility‑first questionnaire for cataract & glaucoma clinics.
 
-> Live hosting: GitHub Pages (public). Local preview: VS Code **Live Server**.
+## Project layout
 
----
+- `index.html` — main page.
+- `app.js` — questionnaire flow + submit logic.
+- `config.js` — frontend Supabase config (project URL + publishable key).
+- `schema.json` — questionnaire content and flow.
+- `supabase/functions/submit/index.ts` — Supabase Edge Function for secure submission.
 
-## Folder layout
-pre-consultation-starter/ ├─ index.html       # main page (loads app.js) ├─ styles.css       # large fonts, big buttons, high contrast ├─ app.js           # renders UI + fetches schema.json └─ schema.json      # QUESTIONS + FLOW (edit this file)
----
+## Frontend Supabase configuration
 
-## Editing the questionnaire (`schema.json`)
-- Open **`schema.json`** and edit labels/options.
-- Add new steps under `questions` and update the previous step’s `next`.
-- **Types:** `text`, `slider`, `single`, `multi`, `ocular_dominance`, `review`.
+Set values in `config.js`:
+
+```js
+window.APP_CONFIG = {
+  SUPABASE_URL: 'https://YOUR_PROJECT_REF.supabase.co',
+  SUPABASE_PUBLISHABLE_KEY: 'YOUR_SUPABASE_PUBLISHABLE_KEY',
+};
+```
+
+- `SUPABASE_URL` should be your Supabase project URL.
+- `SUPABASE_PUBLISHABLE_KEY` should be your public anon/publishable key.
+- **Do not put `SERVICE_ROLE_KEY` in frontend code.** It is server-only.
+
+## Edge Function deploy/update
+
+The submit function lives at `supabase/functions/submit/index.ts` and expects these secrets:
+
+- `PROJECT_URL`
+- `SERVICE_ROLE_KEY`
+- `CLINIC_SUBMIT_CODE`
+
+Typical update flow:
+
+```bash
+supabase functions deploy submit
+```
+
+If needed, set or update secrets first:
+
+```bash
+supabase secrets set PROJECT_URL=... SERVICE_ROLE_KEY=... CLINIC_SUBMIT_CODE=...
+```
+
+After deploy, frontend submits to:
+
+```text
+${SUPABASE_URL}/functions/v1/submit
+```
