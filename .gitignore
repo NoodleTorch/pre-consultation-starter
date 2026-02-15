@@ -1,0 +1,10 @@
+# Editor
+.vscode/
+
+# Supabase local artifacts
+supabase/.temp/
+supabase/config.toml
+
+# Function scaffolding artifacts
+supabase/functions/**/.npmrc
+supabase/functions/**/deno.json
