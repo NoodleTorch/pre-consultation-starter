@@ -10,7 +10,7 @@
     const SCHEMA_URL = 'schema.json';
     const STORE_KEY = 'preconsult_answers_v1';
     const SUPABASE_URL = APP_CONFIG.SUPABASE_URL || '';
-    const SUPABASE_PUBLISHABLE_KEY = APP_CONFIG.SUPABASE_PUBLISHABLE_KEY || '';
+    const SUPABASE_ANON_KEY = APP_CONFIG.SUPABASE_ANON_KEY || '';
 
     // Placeholder image (generic) for options like A5_drops when no brand image provided
     const PLACEHOLDER_SVG = `<svg xmlns='http://www.w3.org/2000/svg' width='160' height='110' viewBox='0 0 160 110'>
@@ -150,8 +150,8 @@
     }
 
     async function onSubmit() {
-      if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-        setSubmitStatus('error', 'Supabase config is missing. Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY first.');
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        setSubmitStatus('error', 'Supabase config is missing. Set SUPABASE_URL and SUPABASE_ANON_KEY first.');
         return;
       }
 
@@ -183,8 +183,8 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            apikey: SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify(payload),
         });
