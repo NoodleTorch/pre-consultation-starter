@@ -6,8 +6,11 @@
   // Stores answers in localStorage until submit.
   
   (function () {
+    const APP_CONFIG = window.APP_CONFIG || {};
     const SCHEMA_URL = 'schema.json';
     const STORE_KEY = 'preconsult_answers_v1';
+    const SUPABASE_URL = APP_CONFIG.SUPABASE_URL || '';
+    const SUPABASE_PUBLISHABLE_KEY = APP_CONFIG.SUPABASE_PUBLISHABLE_KEY || '';
 
     // Placeholder image (generic) for options like A5_drops when no brand image provided
     const PLACEHOLDER_SVG = `<svg xmlns='http://www.w3.org/2000/svg' width='160' height='110' viewBox='0 0 160 110'>
@@ -27,9 +30,12 @@
   
       review: document.getElementById('review'),
       reviewBack: document.getElementById('reviewBackBtn'),
+      reviewSubmit: document.getElementById('submitBtn'),
       reviewContent: document.getElementById('reviewContent'),
-  
+      reviewStatus: document.getElementById('reviewStatus'),
+
       submitted: document.getElementById('submitted'),
+      submittedMessage: document.getElementById('submittedMessage'),
       output: document.getElementById('output'),
       copy: document.getElementById('copyBtn'),
       download: document.getElementById('downloadBtn'),
@@ -43,6 +49,7 @@
       stack: [],
       // Answers object: { [id]: value }
       answers: loadAnswers(),
+      clinicCode: null,
     };
   
     // Bootstrap
@@ -73,6 +80,7 @@
       el.next.addEventListener('click', onNext);
       el.back.addEventListener('click', onBack);
       el.reviewBack.addEventListener('click', onReviewBack);
+      el.reviewSubmit.addEventListener('click', onSubmit);
       el.copy.addEventListener('click', onCopy);
       el.download.addEventListener('click', onDownload);
       el.restart.addEventListener('click', onRestart);
@@ -135,8 +143,76 @@
       localStorage.removeItem(STORE_KEY);
       app.answers = {};
       app.stack = [];
+      app.clinicCode = null;
+      setSubmitStatus('');
       showForm();
       goTo(app.schema.start, false);
+    }
+
+    async function onSubmit() {
+      if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+        setSubmitStatus('error', 'Supabase config is missing. Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY first.');
+        return;
+      }
+
+      if (!app.clinicCode) {
+        const enteredCode = window.prompt('Enter your clinic code to submit your responses:');
+        if (!enteredCode || !enteredCode.trim()) {
+          setSubmitStatus('error', 'A clinic code is required to submit.');
+          return;
+        }
+        app.clinicCode = enteredCode.trim();
+      }
+
+      const payload = {
+        clinic_code: app.clinicCode,
+        schema_version: getSchemaVersion(),
+        answers: app.answers,
+        meta: {
+          tz_offset_minutes: new Date().getTimezoneOffset(),
+          submitted_from: 'web_review_screen',
+        },
+      };
+
+      setSubmitStatus('loading', 'Submitting your responses…');
+      el.reviewSubmit.disabled = true;
+
+      try {
+        const endpoint = `${SUPABASE_URL.replace(/\/$/, '')}/functions/v1/submit`;
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        let body = null;
+        try {
+          body = await response.json();
+        } catch (err) {
+          console.error('submit parse error', err);
+        }
+
+        if (!response.ok || !body?.ok) {
+          const errorMessage = body?.error || `Submit failed (${response.status})`;
+          setSubmitStatus('error', errorMessage);
+          return;
+        }
+
+        localStorage.removeItem(STORE_KEY);
+        app.answers = {};
+        app.stack = [];
+        setSubmitStatus('success', `Submitted successfully. Reference ID: ${body.id}`);
+        showSubmitted(body.id);
+      } catch (err) {
+        console.error('submit error', err);
+        setSubmitStatus('error', 'Could not submit right now. Please check your connection and try again.');
+      } finally {
+        el.reviewSubmit.disabled = false;
+      }
     }
   
     function getQ(id) {
@@ -557,27 +633,39 @@
       el.form.classList.add('hidden');
       el.review.classList.remove('hidden');
       el.submitted.classList.add('hidden');
-  
-      // Submit button action builds payload and shows submitted view
-      document.getElementById('submitBtn').onclick = () => {
-        const payload = {
-          title: app.schema.title || 'Pre‑Consultation',
-          timestamp: new Date().toISOString(),
-          answers: app.answers,
-        };
-        const json = JSON.stringify(payload, null, 2);
-        el.output.value = json;
-        el.form.classList.add('hidden');
-        el.review.classList.add('hidden');
-        el.submitted.classList.remove('hidden');
-        el.output.focus();
-      };
+      setSubmitStatus('');
     }
   
     function showForm() {
       el.form.classList.remove('hidden');
       el.review.classList.add('hidden');
       el.submitted.classList.add('hidden');
+      setSubmitStatus('');
+    }
+
+    function showSubmitted(submissionId) {
+      const payload = {
+        title: app.schema.title || 'Pre‑Consultation',
+        submission_id: submissionId,
+        submitted_at: new Date().toISOString(),
+      };
+      el.submittedMessage.textContent = `Your responses were sent successfully. Submission ID: ${submissionId}`;
+      el.output.value = JSON.stringify(payload, null, 2);
+      el.form.classList.add('hidden');
+      el.review.classList.add('hidden');
+      el.submitted.classList.remove('hidden');
+      el.output.focus();
+    }
+
+    function setSubmitStatus(kind, message = '') {
+      if (!el.reviewStatus) return;
+      el.reviewStatus.className = `submit-status ${kind || ''}`.trim();
+      el.reviewStatus.textContent = message;
+    }
+
+    function getSchemaVersion() {
+      const version = app.schema?.schema_version || app.schema?.version || 'v1';
+      return String(version).trim() || 'v1';
     }
   
     function prettyAnswer(val, q) {
