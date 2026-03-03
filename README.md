@@ -50,3 +50,10 @@ After deploy, frontend submits to:
 ```text
 ${SUPABASE_URL}/functions/v1/submit
 ```
+
+## Submission data format
+
+Submitted records now store both:
+
+- `answers` — raw machine-readable values captured from the questionnaire.
+- `answers_display` — human-readable labels derived from `schema.json` options (or raw values for non-option inputs).
