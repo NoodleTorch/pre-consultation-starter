@@ -6,6 +6,7 @@ type SubmitPayload = {
   clinic_code: string;
   schema_version: string;
   answers: Record<string, unknown>;
+  answers_display?: Record<string, unknown>;
   meta?: Record<string, unknown>;
 };
 
@@ -64,6 +65,13 @@ Deno.serve(async (request: Request) => {
     return jsonResponse({ ok: false, error: "answers must be an object" }, 400);
   }
 
+  const answersDisplay =
+    payload.answers_display &&
+      typeof payload.answers_display === "object" &&
+      !Array.isArray(payload.answers_display)
+      ? payload.answers_display
+      : {};
+
   const projectUrl = Deno.env.get("PROJECT_URL");
   const serviceRoleKey = Deno.env.get("SERVICE_ROLE_KEY");
 
@@ -92,6 +100,7 @@ Deno.serve(async (request: Request) => {
     .insert({
       schema_version: payload.schema_version,
       answers: payload.answers,
+      answers_display: answersDisplay,
       meta,
     })
     .select("id")

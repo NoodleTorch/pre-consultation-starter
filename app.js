@@ -168,6 +168,7 @@
         clinic_code: app.clinicCode,
         schema_version: getSchemaVersion(),
         answers: app.answers,
+        answers_display: buildAnswersDisplay(),
         meta: {
           tz_offset_minutes: new Date().getTimezoneOffset(),
           submitted_from: 'web_review_screen',
@@ -666,6 +667,43 @@
     function getSchemaVersion() {
       const version = app.schema?.schema_version || app.schema?.version || 'v1';
       return String(version).trim() || 'v1';
+    }
+
+    function buildAnswersDisplay() {
+      const display = {};
+      const questions = app.schema?.questions || {};
+
+      Object.entries(app.answers).forEach(([questionId, value]) => {
+        const question = questions[questionId];
+        if (!question) {
+          display[questionId] = value;
+          return;
+        }
+
+        if (question.type === 'single') {
+          const options = Array.isArray(question.options) ? question.options : [];
+          const option = options.find(opt => String(opt.value ?? opt) === String(value));
+          display[questionId] = option ? String(option.label ?? option.value ?? value) : value;
+          return;
+        }
+
+        if (question.type === 'multi') {
+          const options = Array.isArray(question.options) ? question.options : [];
+          if (!Array.isArray(value)) {
+            display[questionId] = value;
+            return;
+          }
+          display[questionId] = value.map(item => {
+            const option = options.find(opt => String(opt.value ?? opt) === String(item));
+            return option ? String(option.label ?? option.value ?? item) : item;
+          });
+          return;
+        }
+
+        display[questionId] = value;
+      });
+
+      return display;
     }
   
     function prettyAnswer(val, q) {
